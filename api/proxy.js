@@ -1,5 +1,4 @@
-// api/proxy.js - 稳定版，无流式传输，使用 text/arrayBuffer
-const ALLOWED_DOMAINS = [
+const ALLOWED = [
   'huggingface.co',
   'github.com',
   'raw.githubusercontent.com',
@@ -11,10 +10,8 @@ const ALLOWED_DOMAINS = [
   'tanle.xyz'
 ];
 
-function isAllowed(hostname) {
-  return ALLOWED_DOMAINS.some(domain =>
-    hostname === domain || hostname.endsWith('.' + domain)
-  );
+function isAllowed(host) {
+  return ALLOWED.some(d => host === d || host.endsWith('.' + d));
 }
 
 module.exports = async (req, res) => {
@@ -22,135 +19,88 @@ module.exports = async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     let target = url.searchParams.get('to');
 
-    // 如果没有 ?to= 参数，尝试从路径解析（如 /huggingface.co/models）
     if (!target) {
-      const match = url.pathname.match(/^\/([^\/]+)(\/.*)?$/);
-      if (match) {
-        const domain = match[1];
-        const rest = match[2] || '/';
-        if (isAllowed(domain)) {
-          target = `https://${domain}${rest}${url.search}`;
-        }
+      const m = url.pathname.match(/^\/([^\/]+)(\/.*)?$/);
+      if (m && isAllowed(m[1])) {
+        target = 'https://' + m[1] + (m[2] || '/') + url.search;
       }
     }
 
-    // 没有目标 → 返回导航页
     if (!target) {
-      const navHtml = getNavPage();
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(navHtml);
+      return res.end(getNav());
     }
 
     const targetUrl = new URL(target);
     if (!isAllowed(targetUrl.hostname)) {
-      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-      return res.end('Domain not allowed: ' + targetUrl.hostname);
+      res.writeHead(403);
+      return res.end('Not allowed');
     }
 
-    // 构造请求头（使用 Headers 对象）
     const headers = new Headers();
-    for (const [key, value] of Object.entries(req.headers)) {
-      const lower = key.toLowerCase();
-      if (['host', 'cf-connecting-ip', 'x-vercel-id', 'connection', 'content-length'].includes(lower)) continue;
-      headers.set(key, value);
+    for (const [k, v] of Object.entries(req.headers)) {
+      const low = k.toLowerCase();
+      if (['host', 'cf-connecting-ip', 'x-vercel-id', 'connection', 'content-length'].includes(low)) continue;
+      headers.set(k, v);
     }
     headers.set('Host', targetUrl.hostname);
 
-    // 发起请求
-    const upstreamRes = await fetch(targetUrl.toString(), {
+    const upRes = await fetch(targetUrl.toString(), {
       method: req.method,
       headers,
       body: (req.method !== 'GET' && req.method !== 'HEAD') ? req : undefined,
-      redirect: 'manual',
+      redirect: 'manual'
     });
 
-    // 处理 3xx 重定向
-    if ([301, 302, 303, 307, 308].includes(upstreamRes.status)) {
-      const location = upstreamRes.headers.get('location');
-      if (location) {
+    if ([301,302,303,307,308].includes(upRes.status)) {
+      const loc = upRes.headers.get('location');
+      if (loc) {
         try {
-          const locUrl = new URL(location, targetUrl);
+          const locUrl = new URL(loc, targetUrl);
           if (isAllowed(locUrl.hostname)) {
-            const newLoc = `/${locUrl.hostname}${locUrl.pathname}${locUrl.search}`;
-            res.writeHead(upstreamRes.status, { 'Location': newLoc });
+            const newLoc = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
+            res.writeHead(upRes.status, { 'Location': newLoc });
             return res.end();
           }
         } catch {}
       }
-      res.writeHead(upstreamRes.status);
+      res.writeHead(upRes.status);
       return res.end();
     }
 
-    // 收集响应头
     const respHeaders = {};
-    upstreamRes.headers.forEach((value, key) => {
-      const lower = key.toLowerCase();
-      if (['content-encoding', 'transfer-encoding', 'content-security-policy',
-           'content-security-policy-report-only', 'cross-origin-resource-policy'].includes(lower)) return;
-      respHeaders[key] = value;
+    upRes.headers.forEach((val, key) => {
+      const low = key.toLowerCase();
+      if (['content-encoding','transfer-encoding','content-security-policy','content-security-policy-report-only','cross-origin-resource-policy'].includes(low)) return;
+      respHeaders[key] = val;
     });
     delete respHeaders['content-security-policy'];
     delete respHeaders['content-security-policy-report-only'];
     respHeaders['Access-Control-Allow-Origin'] = '*';
 
-    // 判断内容类型
-    const contentType = (respHeaders['Content-Type'] || respHeaders['content-type'] || '').toLowerCase();
+    const ct = (respHeaders['Content-Type'] || respHeaders['content-type'] || '').toLowerCase();
 
-    if (contentType.includes('text/html')) {
-      // HTML 页面：读取文本并注入修复脚本
-      let html = await upstreamRes.text();
-      const fixScript = `
-        <script>
-          (function() {
-            var basePath = window.location.pathname.split('/').slice(0, 2).join('/') + '/';
-            document.addEventListener('click', function(e) {
-              var link = e.target.closest('a');
-              if (link && link.href) {
-                try {
-                  var linkUrl = new URL(link.href);
-                  if (linkUrl.hostname === '${targetUrl.hostname}' || linkUrl.hostname.endsWith('.${targetUrl.hostname.split('.').slice(-2).join('.')}')) {
-                    e.preventDefault();
-                    window.location.href = basePath + linkUrl.pathname.replace(/^\\//, '') + linkUrl.search;
-                  }
-                } catch(e) {}
-              }
-            });
-          })();
-        </script>`;
-      html = html.replace('</body>', fixScript + '</body>');
-      res.writeHead(upstreamRes.status, respHeaders);
+    if (ct.includes('text/html')) {
+      let html = await upRes.text();
+      const fix = '<script>(function(){var b=window.location.pathname.split("/").slice(0,2).join("/")+"/";document.addEventListener("click",function(e){var l=e.target.closest("a");if(l&&l.href){try{var u=new URL(l.href);if(u.hostname==="'+targetUrl.hostname+'"||u.hostname.endsWith(".'+targetUrl.hostname.split('.').slice(-2).join('.')+'")){e.preventDefault();window.location.href=b+u.pathname.replace(/^\\//,"")+u.search}}}catch(e){}}})})();</script>';
+      html = html.replace('</body>', fix + '</body>');
+      res.writeHead(upRes.status, respHeaders);
       return res.end(html);
     }
 
-    // 其他类型（JS、CSS、图片、二进制等）：读取 buffer 并发送
-    const buffer = await upstreamRes.arrayBuffer();
-    res.writeHead(upstreamRes.status, respHeaders);
-    res.end(Buffer.from(buffer));
+    const buf = await upRes.arrayBuffer();
+    res.writeHead(upRes.status, respHeaders);
+    res.end(Buffer.from(buf));
 
   } catch (err) {
-    console.error('PROXY_ERROR:', err);
+    console.error(err);
     if (!res.headersSent) {
-      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Internal Error: ' + err.message);
+      res.writeHead(500);
+      res.end('Error: ' + err.message);
     }
   }
 };
 
-function getNavPage() {
-  return `<!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8">
-<title>反代导航</title>
-<style>
-body{font-family:sans-serif;background:#f1f5f9;padding:2rem;text-align:center}
-.card{display:inline-block;margin:1rem;padding:2rem;background:white;border-radius:12px;text-decoration:none;color:#333;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-.card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.15)}
-.icon{font-size:2.5rem;display:block;margin-bottom:0.5rem}
-</style></head>
-<body>
-<h1>🌐 反代导航</h1>
-<a class="card" href="/huggingface.co/"><span class="icon">🤗</span><h3>Hugging Face</h3></a>
-<a class="card" href="/github.com/"><span class="icon">🐙</span><h3>GitHub</h3></a>
-<a class="card" href="/vercel.com/"><span class="icon">▲</span><h3>Vercel</h3></a>
-<a class="card" href="/drive.internxt.com/"><span class="icon">☁️</span><h3>Internxt</h3></a>
-</body></html>`;
+function getNav() {
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>导航</title><style>body{font-family:sans-serif;background:#f1f5f9;padding:2rem;text-align:center}.card{display:inline-block;margin:1rem;padding:2rem;background:white;border-radius:12px;text-decoration:none;color:#333;box-shadow:0 2px 8px rgba(0,0,0,0.1)}.card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.15)}.icon{font-size:2.5rem;display:block}</style></head><body><h1>🌐 反代导航</h1><a class="card" href="/huggingface.co/"><span class="icon">🤗</span><h3>Hugging Face</h3></a><a class="card" href="/github.com/"><span class="icon">🐙</span><h3>GitHub</h3></a><a class="card" href="/vercel.com/"><span class="icon">▲</span><h3>Vercel</h3></a><a class="card" href="/drive.internxt.com/"><span class="icon">☁️</span><h3>Internxt</h3></a></body></html>';
 }
