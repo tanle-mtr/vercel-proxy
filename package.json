@@ -1,0 +1,13 @@
+{
+  "name": "vercel-proxy",
+  "version": "2.0.0",
+  "description": "Vercel universal proxy - no whitelist, proxy any website",
+  "private": true,
+  "engines": {
+    "node": ">=18.x"
+  },
+  "scripts": {
+    "start": "vercel start"
+  },
+  "dependencies": {}
+}
