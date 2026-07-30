@@ -1,152 +1,13 @@
-export default async function handler(request) {
-  try {
-    const url = new URL(request.url, `https://${request.headers.get('host') || 'localhost'}`);
-    const path = url.pathname;
-
-    // 根路径 → 导航页
-    if (path === '/' || path === '') {
-      return new Response(getNavPage(), {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
-      });
-    }
-
-    // 只处理以白名单域名开头的路径
-    const allowedPrefixes = [
-      '/github.com',
-      '/api.github.com',
-      '/raw.githubusercontent.com',
-      '/codeload.github.com',
-      '/objects.githubusercontent.com',
-      '/camo.githubusercontent.com',
-      '/avatars.githubusercontent.com'
-    ];
-
-    let matchedPrefix = null;
-    for (const prefix of allowedPrefixes) {
-      if (path.startsWith(prefix + '/') || path === prefix) {
-        matchedPrefix = prefix;
-        break;
-      }
-    }
-
-    if (!matchedPrefix) {
-      // 路径不符合格式，返回导航页
-      return new Response(getNavPage(), {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
-      });
-    }
-
-    // 提取目标域名和剩余路径
-    const targetHost = matchedPrefix.slice(1); // 去掉开头的 /
-    let remainingPath = path.slice(matchedPrefix.length) || '/';
-    // 如果 remainingPath 为空，设为 /
-    if (remainingPath === '') remainingPath = '/';
-
-    const upstreamUrl = `https://${targetHost}${remainingPath}${url.search}`;
-
-    // 构建新请求（保留原始方法、头、body，手动处理重定向）
-    const newReq = new Request(upstreamUrl, {
-      method: request.method,
-      headers: request.headers,
-      body: request.method === 'GET' || request.method === 'HEAD' ? null : request.body,
-      redirect: 'manual'
-    });
-
-    // 设置关键请求头
-    newReq.headers.set('Host', targetHost);
-    newReq.headers.set('Origin', `https://${targetHost}`);
-    newReq.headers.set('Referer', `https://${targetHost}/`);
-    newReq.headers.delete('cf-connecting-ip');
-    newReq.headers.delete('x-vercel-ip-address');
-
-    const response = await fetch(newReq);
-    let responseHeaders = new Headers(response.headers);
-
-    // 删除危险响应头
-    responseHeaders.delete('content-security-policy');
-    responseHeaders.delete('content-security-policy-report-only');
-    responseHeaders.delete('clear-site-data');
-    responseHeaders.set('access-control-allow-origin', '*');
-    responseHeaders.delete('access-control-allow-credentials');
-
-    // 处理重定向 Location
-    const location = responseHeaders.get('location');
-    if (location) {
-      try {
-        const locUrl = new URL(location);
-        if (locUrl.hostname.includes('github.com') || locUrl.hostname.includes('githubusercontent.com')) {
-          const newLoc = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
-          responseHeaders.set('location', newLoc);
-        }
-      } catch {}
-    }
-
-    const contentType = responseHeaders.get('content-type') || '';
-
-    // HTML 内容：替换绝对 URL + 注入轻量修复脚本
-    if (contentType.includes('text/html')) {
-      let text = await response.text();
-      text = replaceText(text);
-
-      const fixScript = `
-        <script>
-          (function() {
-            var map = {
-              'https://github.com': '/github.com',
-              'https://api.github.com': '/api.github.com',
-              'https://raw.githubusercontent.com': '/raw.githubusercontent.com',
-              'https://codeload.github.com': '/codeload.github.com'
-            };
-            function proxyUrl(u) {
-              for (var k in map) {
-                if (u.indexOf(k) === 0) return map[k] + u.substring(k.length);
-              }
-              return u;
-            }
-            var _fetch = window.fetch;
-            window.fetch = function(input, init) {
-              if (typeof input === 'string') input = proxyUrl(input);
-              else if (input instanceof Request) input = new Request(proxyUrl(input.url), input);
-              return _fetch.call(this, input, init);
-            };
-            var _open = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function(m, u) {
-              arguments[1] = proxyUrl(u);
-              return _open.apply(this, arguments);
-            };
-          })();
-        </script>
-      `;
-      text = text.replace('</head>', fixScript + '</head>');
-
-      return new Response(text, {
-        status: response.status,
-        headers: responseHeaders
-      });
-    }
-
-    // 非 HTML：直接流式返回
-    return new Response(response.body, {
-      status: response.status,
-      headers: responseHeaders
-    });
-
-  } catch (err) {
-    console.error('Proxy Error:', err);
-    return new 应答('Internal Server Error: ' + err.message, { status: 500 });
-  }
-}
-
-function replaceText(text) {
-  text = text.replace(/https:\/\/github\.com/g, '/github.com');
-  text = text.replace(/https:\/\/api\.github\.com/g, '/api.github.com');
-  text = text.replace(/https:\/\/raw\.githubusercontent\.com/g, '/raw.githubusercontent.com');
-  text = text.replace(/https:\/\/codeload\.github\.com/g, '/codeload.github.com');
-  text = text.replace(/https:\/\/objects\.githubusercontent\.com/g, '/objects.githubusercontent.com');
-  text = text.replace(/https:\/\/avatars\.githubusercontent\.com/g, '/avatars.githubusercontent.com');
-  text = text.replace(/https:\/\/camo\.githubusercontent\.com/g, '/camo.githubusercontent.com');
-  return text;
-}
+// api/proxy.js - Vercel Node.js 运行时，使用 (req, res) 回调
+const ALLOWED_PREFIXES = [
+  '/github.com',
+  '/api.github.com',
+  '/raw.githubusercontent.com',
+  '/codeload.github.com',
+  '/objects.githubusercontent.com',
+  '/camo.githubusercontent.com',
+  '/avatars.githubusercontent.com'
+];
 
 function getNavPage() {
   return `<!DOCTYPE html>
@@ -183,3 +44,171 @@ code{background:#0d1117;padding:2px 6px;border-radius:4px;color:#79c0ff}
 </div>
 </div></body></html>`;
 }
+
+function replaceText(text) {
+  text = text.replace(/https:\/\/github\.com/g, '/github.com');
+  text = text.replace(/https:\/\/api\.github\.com/g, '/api.github.com');
+  text = text.replace(/https:\/\/raw\.githubusercontent\.com/g, '/raw.githubusercontent.com');
+  text = text.replace(/https:\/\/codeload\.github\.com/g, '/codeload.github.com');
+  text = text.replace(/https:\/\/objects\.githubusercontent\.com/g, '/objects.githubusercontent.com');
+  text = text.replace(/https:\/\/avatars\.githubusercontent\.com/g, '/avatars.githubusercontent.com');
+  text = text.replace(/https:\/\/camo\.githubusercontent\.com/g, '/camo.githubusercontent.com');
+  return text;
+}
+
+module.exports = async (req, res) => {
+  try {
+    // 解析 URL
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const path = url.pathname;
+
+    // 根路径 → 导航页
+    if (path === '/' || path === '') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(getNavPage());
+    }
+
+    // 检查是否以白名单前缀开头
+    let matchedPrefix = null;
+    for (const prefix of ALLOWED_PREFIXES) {
+      if (path === prefix || path.startsWith(prefix + '/')) {
+        matchedPrefix = prefix;
+        break;
+      }
+    }
+
+    if (!matchedPrefix) {
+      // 不是合法代理路径，返回导航页
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(getNavPage());
+    }
+
+    const targetHost = matchedPrefix.slice(1); // 去掉开头的 /
+    let remainingPath = path.slice(matchedPrefix.length) || '/';
+    if (remainingPath === '') remainingPath = '/';
+
+    const upstreamUrl = `https://${targetHost}${remainingPath}${url.search}`;
+
+    // 构建请求头（从 req.headers 复制）
+    const headers = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      const lower = key.toLowerCase();
+      if (['host', 'cf-connecting-ip', 'x-vercel-id', 'connection', 'content-length'].includes(lower)) continue;
+      headers[key] = value;
+    }
+    headers['Host'] = targetHost;
+    headers['Origin'] = `https://${targetHost}`;
+    headers['Referer'] = `https://${targetHost}/`;
+
+    // 发起上游请求
+    const fetchOpts = {
+      method: req.method,
+      headers,
+      redirect: 'manual'
+    };
+
+    // 处理请求体（非 GET/HEAD）
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      const body = await new Promise((resolve, reject) => {
+        const chunks = [];
+        req.on('data', chunk => chunks.push(chunk));
+        req.on('end', () => resolve(Buffer.concat(chunks)));
+        req.on('error', reject);
+      });
+      fetchOpts.body = body;
+    }
+
+    const upstreamRes = await fetch(upstreamUrl, fetchOpts);
+    const status = upstreamRes.status;
+
+    // 处理重定向
+    if ([301, 302, 303, 307, 308].includes(status)) {
+      const location = upstreamRes.headers.get('location');
+      if (location) {
+        try {
+          const locUrl = new URL(location);
+          if (locUrl.hostname.includes('github.com') || locUrl.hostname.includes('githubusercontent.com')) {
+            const newLoc = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
+            res.writeHead(status, { 'Location': newLoc });
+            return res.end();
+          }
+        } catch {}
+      }
+      res.writeHead(status, { 'Location': location || '' });
+      return res.end();
+    }
+
+    // 收集响应头
+    const respHeaders = {};
+    upstreamRes.headers.forEach((value, key) => {
+      const lower = key.toLowerCase();
+      if (['content-encoding', 'transfer-encoding', 'content-security-policy',
+           'content-security-policy-report-only', 'clear-site-data'].includes(lower)) return;
+      respHeaders[key] = value;
+    });
+    respHeaders['Access-Control-Allow-Origin'] = '*';
+    delete respHeaders['access-control-allow-credentials'];
+
+    const contentType = (respHeaders['Content-Type'] || '').toLowerCase();
+
+    if (contentType.includes('text/html')) {
+      let html = await upstreamRes.text();
+      html = replaceText(html);
+
+      const fixScript = `
+        <script>
+          (function() {
+            var map = {
+              'https://github.com': '/github.com',
+              'https://api.github.com': '/api.github.com',
+              'https://raw.githubusercontent.com': '/raw.githubusercontent.com',
+              'https://codeload.github.com': '/codeload.github.com'
+            };
+            function proxyUrl(u) {
+              for (var k in map) {
+                if (u.indexOf(k) === 0) return map[k] + u.substring(k.length);
+              }
+              return u;
+            }
+            var _fetch = window.fetch;
+            window.fetch = function(input, init) {
+              if (typeof input === 'string') input = proxyUrl(input);
+              else if (input instanceof Request) input = new Request(proxyUrl(input.url), input);
+              return _fetch.call(this, input, init);
+            };
+            var _open = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(m, u) {
+              arguments[1] = proxyUrl(u);
+              return _open.apply(this, arguments);
+            };
+          })();
+        </script>
+      `;
+      html = html.replace('</head>', fixScript + '</head>');
+
+      res.writeHead(status, { ...respHeaders, 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(html);
+    }
+
+    // 非 HTML：流式传输
+    res.writeHead(status, respHeaders);
+    if (upstreamRes.body) {
+      const reader = upstreamRes.body.getReader();
+      const pump = () => reader.read().then(({ done, value }) => {
+        if (done) return res.end();
+        res.write(value);
+        pump();
+      });
+      pump();
+    } else {
+      res.end();
+    }
+
+  } catch (err) {
+    console.error('Proxy Error:', err);
+    if (!res.headersSent) {
+      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Internal Server Error: ' + err.message);
+    }
+  }
+};
