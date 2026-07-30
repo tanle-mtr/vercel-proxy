@@ -1,137 +1,83 @@
-// api/proxy.js - 稳定版，服务器代理 + 注入下载按钮
-const { URL } = require('url');
-
-// 允许代理的主机列表
-const ALLOWED_HOSTS = ['github.com', 'api.github.com', 'raw.githubusercontent.com', 'codeload.github.com'];
-
-function isAllowed(host) {
-  return ALLOWED_HOSTS.some(h => host === h || host.endsWith('.' + h));
+// api/proxy.js - 纯导航页，提供下载链接和跳转链接
+module.exports = (req, res) => {
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub 下载助手</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .c{max-width:640px;width:100%;text-align:center}
+    h1{color:#fff;font-size:2.2rem;margin-bottom:.5rem}
+    h1 span{color:#58a6ff}
+    .s{color:#8b949e;margin-bottom:1.5rem;font-size:.95rem}
+    .box{display:flex;gap:8px;margin-bottom:1.5rem}
+    .box input{flex:1;padding:12px 14px;border:1px solid #30363d;border-radius:8px;background:#161b22;color:#c9d1d9;font-size:1rem;outline:0}
+    .box input:focus{border-color:#58a6ff}
+    .box button{padding:12px 20px;border:0;border-radius:8px;background:#238636;color:#fff;font-size:1rem;font-weight:600;cursor:pointer}
+    .box button:hover{background:#2ea043}
+    .links{display:none;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+    .links a{display:block;padding:16px;background:#161b22;border:1px solid #30363d;border-radius:10px;color:#58a6ff;text-decoration:none;font-size:.9rem;transition:border-color .2s}
+    .links a:hover{border-color:#58a6ff}
+    .links a b{display:block;color:#fff;margin-bottom:4px;font-size:.95rem}
+    .tip{text-align:left;padding:14px 16px;background:#161b22;border:1px solid #f0883e;border-radius:8px;margin-bottom:1rem}
+    .tip h3{color:#f0883e;font-size:.9rem;margin-bottom:6px}
+    .tip p,.tip li{color:#8b949e;font-size:.82rem;line-height:1.6}
+    .tip ul{list-style:none;padding:0}
+    .tip code{background:#0d1117;padding:2px 6px;border-radius:3px;color:#79c0ff;font-size:.78rem}
+    .f{margin-top:1.5rem;font-size:.78rem;color:#484f58}
+  </style>
+</head>
+<body>
+<div class="c">
+  <h1><span>⬇️</span> GitHub 下载助手</h1>
+  <p class="s">输入仓库名，一键获取下载链接和访问入口</p>
+  <div class="box">
+    <input id="i" placeholder="owner/repo（如 tanle-mtr/vercel-proxy）" />
+    <button onclick="generate()">生成</button>
+  </div>
+  <div class="links" id="links">
+    <a id="dlLink" target="_blank"><b>⬇️ 下载源码 (zip)</b><span id="dlSpan"></span></a>
+    <a id="visitLink" target="_blank"><b>🌐 访问开源页</b><span id="visitSpan"></span></a>
+  </div>
+  <div class="tip">
+    <h3>💡 说明</h3>
+    <ul>
+      <li>输入 <code>owner/repo</code> 后点击“生成”</li>
+      <li>点击“下载源码”直接下载 zip 压缩包</li>
+      <li>点击“访问开源页”跳转到 GitHub 仓库</li>
+      <li>aria2c 多线程：<code>aria2c -x 16 -s 16 -c "下载链接"</code></li>
+    </ul>
+  </div>
+  <p class="f">Vercel Hobby · 纯导航页，不代理任何内容</p>
+</div>
+<script>
+function generate() {
+  var v = document.getElementById('i').value.trim();
+  if (!v) return;
+  // 清理输入：去掉协议、域名、首尾斜杠
+  v = v.replace(/^https?:\/\//, '').replace(/^github\.com\//, '').replace(/^\/+/, '');
+  var parts = v.split('/');
+  if (parts.length < 2) { alert('格式错误，应为 owner/repo'); return; }
+  var owner = parts[0], repo = parts[1];
+  var dl = 'https://github.com/' + owner + '/' + repo + '/archive/refs/heads/main.zip';
+  var visit = 'https://github.com/' + owner + '/' + repo;
+  document.getElementById('dlLink').href = dl;
+  document.getElementById('dlSpan').textContent = dl;
+  document.getElementById('visitLink').href = visit;
+  document.getElementById('visitSpan').textContent = visit;
+  document.getElementById('links').style.display = 'grid';
 }
+// 回车键触发
+document.getElementById('i').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>`;
 
-// 注入下载按钮（纯 HTML，不依赖 JS）
-function injectDownloadButton(html, owner, repo, branch) {
-  const zipUrl = `/github.com/${owner}/${repo}/archive/refs/heads/${branch}.zip`;
-  const btn = `
-    <div style="
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 2147483647;
-      background: #238636;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    ">
-      <a href="${zipUrl}" target="_blank" style="color: #fff; text-decoration: none;">
-        ⬇️ Download Source (${branch}.zip)
-      </a>
-    </div>
-  `;
-  return html.replace('</body>', btn + '</body>');
-}
-
-// 提取 owner/repo/branch
-function parseRepo(path) {
-  const parts = path.split('/').filter(Boolean);
-  if (parts.length < 3 || parts[0].toLowerCase() !== 'github.com') return null;
-  const owner = parts[1];
-  const repo = parts[2];
-  let branch = 'main';
-  const treeIdx = parts.indexOf('tree');
-  if (treeIdx !== -1 && treeIdx + 1 < parts.length) {
-    branch = parts[treeIdx + 1];
-  }
-  return { owner, repo, branch };
-}
-
-module.exports = async (req, res) => {
-  try {
-    const reqPath = req.url || '/';
-    const parsed = parseRepo(reqPath);
-
-    // 如果不是 github.com 路径，返回导航页或 404
-    if (!parsed) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(`
-        <!DOCTYPE html>
-        <html><head><title>Proxy</title></head>
-        <body style="font-family:sans-serif;padding:50px;background:#0d1117;color:#c9d1d9;">
-          <h1>GitHub Proxy</h1>
-          <p>用法：访问 <code>/github.com/owner/repo</code></p>
-        </body></html>
-      `);
-    }
-
-    const { owner, repo, branch } = parsed;
-
-    // 构建上游 URL（保持原始路径，但去掉开头的 /github.com）
-    const upstreamPath = reqPath.replace(/^\/github\.com/, '') || '/';
-    const upstreamUrl = `https://github.com${upstreamPath}`;
-
-    // 发起 fetch 请求
-    const upstreamRes = await fetch(upstreamUrl, {
-      method: req.method,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-      },
-      redirect: 'follow',
-      timeout: 10000
-    });
-
-    const status = upstreamRes.status;
-    const contentType = upstreamRes.headers.get('content-type') || '';
-
-    // 如果是非 HTML（如重定向、图片等），直接透传
-    if (!contentType.includes('text/html')) {
-      const body = await upstreamRes.buffer();
-      res.writeHead(status, { 'Content-Type': contentType, 'Access-Control-Allow-Origin': '*' });
-      return res.end(body);
-    }
-
-    // 读取 HTML
-    let html = await upstreamRes.text();
-
-    // 替换所有绝对链接为代理链接
-    html = html.replace(/https:\/\/github\.com/g, '/github.com');
-    html = html.replace(/https:\/\/api\.github\.com/g, '/api.github.com');
-    html = html.replace(/https:\/\/raw\.githubusercontent\.com/g, '/raw.githubusercontent.com');
-    html = html.replace(/https:\/\/codeload\.github\.com/g, '/codeload.github.com');
-
-    // 注入下载按钮
-    html = injectDownloadButton(html, owner, repo, branch);
-
-    // 返回修改后的 HTML
-    res.writeHead(status, {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Access-Control-Allow-Origin': '*'
-    });
-    res.end(html);
-
-  } catch (err) {
-    console.error('Fetch error:', err.message);
-    // 如果 fetch 失败，降级为 iframe 方式（但可能仍然无法加载）
-    const fallbackHtml = `
-      <!DOCTYPE html>
-      <html><head><title>Proxy Fallback</title></head>
-      <body style="font-family:sans-serif;background:#0d1117;color:#c9d1d9;padding:20px;">
-        <h2>⚠️ 代理请求失败</h2>
-        <p>无法直接从服务器获取 GitHub 页面，请尝试直接访问：</p>
-        <p><a href="https://github.com${upstreamPath}" style="color:#58a6ff;">https://github.com${upstreamPath}</a></p>
-        <hr>
-        <p>或者使用下载链接（无需代理）：</p>
-        <p><a href="https://github.com/${owner}/${repo}/archive/refs/heads/${branch}.zip" style="color:#238636;">⬇️ 下载 ${branch}.zip</a></p>
-      </body></html>
-    `;
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(fallbackHtml);
-  }
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(html);
 };
