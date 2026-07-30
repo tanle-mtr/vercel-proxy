@@ -1,4 +1,4 @@
-// api/proxy.js - CommonJS 稳定版
+// api/proxy.js - 稳定版，无流式传输，使用 text/arrayBuffer
 const ALLOWED_DOMAINS = [
   'huggingface.co',
   'github.com',
@@ -36,22 +36,25 @@ module.exports = async (req, res) => {
 
     // 没有目标 → 返回导航页
     if (!target) {
-      return sendNavPage(res);
+      const navHtml = getNavPage();
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return res.end(navHtml);
     }
 
     const targetUrl = new URL(target);
     if (!isAllowed(targetUrl.hostname)) {
-      return res.status(403).send('Domain not allowed: ' + targetUrl.hostname);
+      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+      return res.end('Domain not allowed: ' + targetUrl.hostname);
     }
 
-    // 构造请求头
-    const headers = {};
+    // 构造请求头（使用 Headers 对象）
+    const headers = new Headers();
     for (const [key, value] of Object.entries(req.headers)) {
       const lower = key.toLowerCase();
       if (['host', 'cf-connecting-ip', 'x-vercel-id', 'connection', 'content-length'].includes(lower)) continue;
-      headers[key] = value;
+      headers.set(key, value);
     }
-    headers['Host'] = targetUrl.hostname;
+    headers.set('Host', targetUrl.hostname);
 
     // 发起请求
     const upstreamRes = await fetch(targetUrl.toString(), {
@@ -78,7 +81,7 @@ module.exports = async (req, res) => {
       return res.end();
     }
 
-    // 透传响应头
+    // 收集响应头
     const respHeaders = {};
     upstreamRes.headers.forEach((value, key) => {
       const lower = key.toLowerCase();
@@ -90,9 +93,11 @@ module.exports = async (req, res) => {
     delete respHeaders['content-security-policy-report-only'];
     respHeaders['Access-Control-Allow-Origin'] = '*';
 
-    // 如果是 HTML，注入修复脚本（解决相对路径跳转问题）
-    const contentType = respHeaders['Content-Type'] || respHeaders['content-type'] || '';
+    // 判断内容类型
+    const contentType = (respHeaders['Content-Type'] || respHeaders['content-type'] || '').toLowerCase();
+
     if (contentType.includes('text/html')) {
+      // HTML 页面：读取文本并注入修复脚本
       let html = await upstreamRes.text();
       const fixScript = `
         <script>
@@ -117,26 +122,22 @@ module.exports = async (req, res) => {
       return res.end(html);
     }
 
-    // 非 HTML 流式传输
+    // 其他类型（JS、CSS、图片、二进制等）：读取 buffer 并发送
+    const buffer = await upstreamRes.arrayBuffer();
     res.writeHead(upstreamRes.status, respHeaders);
-    const reader = upstreamRes.body.getReader();
-    const pump = () => reader.read().then(({ done, value }) => {
-      if (done) return res.end();
-      res.write(value);
-      pump();
-    });
-    pump();
+    res.end(Buffer.from(buffer));
 
   } catch (err) {
-    console.error(err);
+    console.error('PROXY_ERROR:', err);
     if (!res.headersSent) {
-      res.status(500).send('Internal Error: ' + err.message);
+      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Internal Error: ' + err.message);
     }
   }
 };
 
-function sendNavPage(res) {
-  const html = `<!DOCTYPE html>
+function getNavPage() {
+  return `<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="UTF-8">
 <title>反代导航</title>
 <style>
@@ -152,6 +153,4 @@ body{font-family:sans-serif;background:#f1f5f9;padding:2rem;text-align:center}
 <a class="card" href="/vercel.com/"><span class="icon">▲</span><h3>Vercel</h3></a>
 <a class="card" href="/drive.internxt.com/"><span class="icon">☁️</span><h3>Internxt</h3></a>
 </body></html>`;
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.status(200).send(html);
 }
