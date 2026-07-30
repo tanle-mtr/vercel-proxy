@@ -1,5 +1,23 @@
-// api/proxy.js - CommonJS 版本，无外部依赖
-module。exports = async (req, res) => {
+// api/proxy.js - CommonJS 稳定版
+const ALLOWED_DOMAINS = [
+  'huggingface.co',
+  'github.com',
+  'raw.githubusercontent.com',
+  'codeload.github.com',
+  'objects.githubusercontent.com',
+  'vercel.com',
+  'dash.cloudflare.com',
+  'drive.internxt.com',
+  'tanle.xyz'
+];
+
+function isAllowed(hostname) {
+  return ALLOWED_DOMAINS.some(domain =>
+    hostname === domain || hostname.endsWith('.' + domain)
+  );
+}
+
+module.exports = async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     let target = url.searchParams.get('to');
@@ -10,7 +28,9 @@ module。exports = async (req, res) => {
       if (match) {
         const domain = match[1];
         const rest = match[2] || '/';
-        target = `https://${domain}${rest}${url.search}`;
+        if (isAllowed(domain)) {
+          target = `https://${domain}${rest}${url.search}`;
+        }
       }
     }
 
@@ -20,10 +40,8 @@ module。exports = async (req, res) => {
     }
 
     const targetUrl = new URL(target);
-    const allowedDomains = ['huggingface.co', 'github.com', 'vercel.com', 'dash.cloudflare.com', 'drive.internxt.com'];
-    const isAllowed = allowedDomains.some(d => targetUrl.hostname === d || targetUrl.hostname.endsWith('.' + d));
-    if (!isAllowed) {
-      return res.status(403).send('Domain not allowed');
+    if (!isAllowed(targetUrl.hostname)) {
+      return res.status(403).send('Domain not allowed: ' + targetUrl.hostname);
     }
 
     // 构造请求头
@@ -49,7 +67,7 @@ module。exports = async (req, res) => {
       if (location) {
         try {
           const locUrl = new URL(location, targetUrl);
-          if (allowedDomains.some(d => locUrl.hostname === d || locUrl.hostname.endsWith('.' + d))) {
+          if (isAllowed(locUrl.hostname)) {
             const newLoc = `/${locUrl.hostname}${locUrl.pathname}${locUrl.search}`;
             res.writeHead(upstreamRes.status, { 'Location': newLoc });
             return res.end();
@@ -60,7 +78,7 @@ module。exports = async (req, res) => {
       return res.end();
     }
 
-    // 透传响应
+    // 透传响应头
     const respHeaders = {};
     upstreamRes.headers.forEach((value, key) => {
       const lower = key.toLowerCase();
@@ -72,24 +90,24 @@ module。exports = async (req, res) => {
     delete respHeaders['content-security-policy-report-only'];
     respHeaders['Access-Control-Allow-Origin'] = '*';
 
-    // 如果是 HTML，注入修复脚本
+    // 如果是 HTML，注入修复脚本（解决相对路径跳转问题）
     const contentType = respHeaders['Content-Type'] || respHeaders['content-type'] || '';
     if (contentType.includes('text/html')) {
       let html = await upstreamRes.text();
       const fixScript = `
         <script>
           (function() {
-            const basePath = window.location.pathname.split('/').slice(0, 2).join('/') + '/';
+            var basePath = window.location.pathname.split('/').slice(0, 2).join('/') + '/';
             document.addEventListener('click', function(e) {
-              let link = e.target.closest('a');
+              var link = e.target.closest('a');
               if (link && link.href) {
                 try {
-                  const linkUrl = new URL(link.href);
+                  var linkUrl = new URL(link.href);
                   if (linkUrl.hostname === '${targetUrl.hostname}' || linkUrl.hostname.endsWith('.${targetUrl.hostname.split('.').slice(-2).join('.')}')) {
                     e.preventDefault();
                     window.location.href = basePath + linkUrl.pathname.replace(/^\\//, '') + linkUrl.search;
                   }
-                } catch {}
+                } catch(e) {}
               }
             });
           })();
