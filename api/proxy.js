@@ -1,4 +1,4 @@
-// api/proxy.js - 稳定版，支持 GitHub 文件树展开和下载
+// api/proxy.js - 最终版，全面拦截 GitHub API 请求
 const ALLOWED = [
   'github.com',
   'api.github.com',
@@ -31,7 +31,6 @@ module.exports = async (req, res) => {
       targetHost = potentialHost;
       targetPath = '/' + pathParts.slice(1).join('/');
     } else {
-      // 如果没有显式域名，默认当作 github.com
       targetHost = 'github.com';
       targetPath = reqUrl.pathname;
     }
@@ -83,7 +82,6 @@ module.exports = async (req, res) => {
           }
         } catch {}
       }
-      // 非白名单重定向，直接透传
       res.statusCode = status;
       res.setHeader('Location', loc);
       return res.end();
@@ -106,33 +104,82 @@ module.exports = async (req, res) => {
     if (ct.includes('text/html')) {
       let html = await upRes.text();
 
-      // 关键：将所有 github.com 链接替换为代理路径
+      // 1. 替换所有绝对 URL 为代理路径
       html = html.replace(/https:\/\/github\.com/g, '/github.com');
       html = html.replace(/https:\/\/api\.github\.com/g, '/api.github.com');
       html = html.replace(/https:\/\/raw\.githubusercontent\.com/g, '/raw.githubusercontent.com');
       html = html.replace(/https:\/\/codeload\.github\.com/g, '/codeload.github.com');
 
-      // 注入修复脚本（劫持 fetch 和 XHR）
+      // 2. 注入全面拦截脚本（包含 MutationObserver 和相对路径修复）
       const injectScript = `
         <script>
-          // 修复 fetch 请求，让 api.github.com 的请求走代理
-          var origFetch = window.fetch;
-          window.fetch = function(input, init) {
-            if (typeof input === 'string' && input.indexOf('api.github.com') !== -1) {
-              input = '/' + input;
-            } else if (typeof input === 'string' && input.indexOf('github.com') !== -1 && input.indexOf('https') === 0) {
-              input = '/' + input.replace('https://', '');
+          (function() {
+            // 辅助函数：将 api.github.com 的绝对路径转为代理路径
+            function proxyUrl(url) {
+              if (typeof url !== 'string') return url;
+              // 如果已经是 /api.github.com 开头，保持不变
+              if (url.startsWith('/api.github.com')) return url;
+              // 如果包含 api.github.com，替换
+              if (url.includes('api.github.com')) {
+                return url.replace(/https?:\\/\\/api\\.github\\.com/g, '/api.github.com');
+              }
+              // 如果包含 github.com 且是绝对路径，替换
+              if (url.includes('github.com') && (url.startsWith('http://') || url.startsWith('https://'))) {
+                return url.replace(/https?:\\/\\/([^\\/]+)/, '/$1');
+              }
+              return url;
             }
-            return origFetch.call(this, input, init);
-          };
-          // 修复 XMLHttpRequest
-          var origOpen = XMLHttpRequest.prototype.open;
-          XMLHttpRequest.prototype.open = function(method, url) {
-            if (typeof url === 'string' && url.indexOf('api.github.com') !== -1) {
-              arguments[1] = '/' + url;
-            }
-            return origOpen.apply(this, arguments);
-          };
+
+            // 劫持 fetch
+            var origFetch = window.fetch;
+            window.fetch = function(input, init) {
+              if (typeof input === 'string') {
+                input = proxyUrl(input);
+              } else if (input instanceof Request) {
+                // 如果是 Request 对象，修改其 url 属性（可能需要克隆）
+                var newInput = new Request(proxyUrl(input.url), input);
+                return origFetch.call(this, newInput, init);
+              }
+              return origFetch.call(this, input, init);
+            };
+
+            // 劫持 XMLHttpRequest
+            var origOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+              arguments[1] = proxyUrl(url);
+              return origOpen.apply(this, arguments);
+            };
+
+            // 使用 MutationObserver 监控动态添加的资源（如 script, img, link）
+            var observer = new MutationObserver(function(mutations) {
+              mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                  if (node.nodeType === 1) { // Element
+                    // 处理 <script src="...">
+                    if (node.tagName === 'SCRIPT' && node.src) {
+                      node.src = proxyUrl(node.src);
+                    }
+                    // 处理 <img src="...">
+                    if (node.tagName === 'IMG' && node.src) {
+                      node.src = proxyUrl(node.src);
+                    }
+                    // 处理 <link href="...">
+                    if (node.tagName === 'LINK' && node.href) {
+                      node.href = proxyUrl(node.href);
+                    }
+                    // 处理 <iframe src="...">
+                    if (node.tagName === 'IFRAME' && node.src) {
+                      node.src = proxyUrl(node.src);
+                    }
+                  }
+                });
+              });
+            });
+            observer.observe(document.documentElement, {
+              childList: true,
+              subtree: true
+            });
+          })();
         </script>
       `;
       html = html.replace('</head>', injectScript + '</head>');
