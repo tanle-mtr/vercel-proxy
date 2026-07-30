@@ -1,4 +1,4 @@
-// api/proxy.js - Vercel GitHub 代理（极简稳定版）
+// api/proxy.js - Vercel GitHub 代理（稳定版，导航页下载功能）
 const ALLOWED = [
   'github.com',
   'api.github.com',
@@ -13,7 +13,7 @@ function isAllowedHost(h) {
   return ALLOWED.some(function(d) { return h === d || h.endsWith('.' + d); });
 }
 
-// 导航页
+// 导航页（带下载功能）
 function getNavPage(host) {
   return '<!DOCTYPE html>'
     + '<html lang="zh-CN"><head><meta charset="UTF-8">'
@@ -68,10 +68,10 @@ function getNavPage(host) {
     + 'function go(){'
     + '  var v=document.getElementById("i").value.trim();'
     + '  if(!v)return;'
-    + '  if(v.indexOf("github.com/")>=0)v=v.split("github.com/")[1].replace(/^[/]+/,'');'
-    + '  v=v.replace(/^https?:\\/\\//,'').replace(/^[/]+/,'');'
+    + '  if(v.indexOf("github.com/")>=0)v=v.split("github.com/")[1].replace(/^[/]+/,"");'
+    + '  v=v.replace(/^https?:\\/\\//,"").replace(/^[/]+/,"");'
     + '  var p=v.split("/");if(p.length<2)return alert("格式应为 owner/repo");'
-    + '  var owner=p[0],repo=p[1],branch=p[2]?"":"";'
+    + '  var owner=p[0],repo=p[1];'
     + '  var base="https://"+location.host+"/";'
     + '  var zip=base+"github.com/"+owner+"/"+repo+"/archive/refs/heads/main.zip";'
     + '  var browse=base+"github.com/"+owner+"/"+repo;'
@@ -85,37 +85,6 @@ function getNavPage(host) {
     + '}'
     + 'document.getElementById("i").addEventListener("keydown",function(e){if(e.key==="Enter")go()});'
     + '</script></body></html>';
-}
-
-// 顶部悬浮下载条（纯 HTML + CSS，不依赖 JS）
-function getDownloadBanner(owner, repo, branch) {
-  var zipUrl = '/github.com/' + owner + '/' + repo + '/archive/refs/heads/' + branch + '.zip';
-  return '<div style="'
-    + 'position:fixed;top:0;left:0;right:0;z-index:999999;'
-    + 'background:#238636;color:#fff;padding:10px 16px;'
-    + 'font-family:-apple-system,sans-serif;font-size:14px;font-weight:600;'
-    + 'display:flex;align-items:center;justify-content:center;gap:12px;'
-    + 'box-shadow:0 2px 8px rgba(0,0,0,0.3);'
-    + '">'
-    + '  <span>📦 ' + owner + '/' + repo + '</span>'
-    + '  <span style="opacity:0.6">|</span>'
-    + '  <span>🌿 ' + branch + '</span>'
-    + '  <a href="' + zipUrl + '" target="_blank" style="'
-    + '    background:#fff;color:#238636;padding:6px 14px;border-radius:6px;'
-    + '    text-decoration:none;font-weight:700;font-size:13px;'
-    + '  ">⬇️ 下载源码 (' + branch + '.zip)</a>'
-    + '</div>'
-    + '<div style="height:44px"></div>'; // 占位防止遮挡内容
-}
-
-// 提取仓库信息
-function extractRepo(path) {
-  var m = path.match(/^\/([^\/]+)\/([^\/]+)(\/.*)?$/);
-  return m ? { owner: m[1], repo: m[2] } : null;
-}
-function extractBranch(path) {
-  var m = path.match(/\/tree\/([^\/]+)/);
-  return m ? m[1] : 'main';
 }
 
 // 文本替换
@@ -217,7 +186,7 @@ module.exports = async function handler(req, res) {
           var locUrl = new URL(loc);
           if (isAllowedHost(locUrl.hostname)) {
             var newLoc = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
-            res.writeHead(status, { 'Location': newLoc });
+            res。writeHead(status, { 'Location': newLoc });
             return res.end();
           }
         } catch (e) {}
@@ -240,22 +209,10 @@ module.exports = async function handler(req, res) {
 
     var contentType = (respHeaders['Content-Type'] || '').toLowerCase();
 
-    // HTML 处理：文本替换 + 顶部悬浮下载条
+    // HTML 处理：仅做文本替换，不注入任何元素
     if (contentType.indexOf('text/html') >= 0) {
       var html = await upstreamRes.text();
       html = replaceText(html);
-
-      // 只在 github.com 的仓库页面注入悬浮条
-      if (targetHost === 'github.com') {
-        var repoInfo = extractRepo(remainingPath);
-        if (repoInfo) {
-          var branch = extractBranch(remainingPath);
-          var banner = getDownloadBanner(repoInfo.owner, repoInfo.repo, branch);
-          // 在 <body> 后插入悬浮条（纯 HTML/CSS，不需要 JS 执行）
-          html = html.replace('<body', '<body>' + banner + '<script>document.body.style.paddingTop="44px"</script><body');
-          // 上面的写法有问题，改为：
-        }
-      }
 
       res.writeHead(status, Object.assign({}, respHeaders, { 'Content-Type': 'text/html; charset=utf-8' }));
       return res.end(html);
