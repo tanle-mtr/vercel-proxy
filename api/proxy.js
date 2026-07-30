@@ -1,48 +1,54 @@
-// Vercel Functions - GitHub 代理（参考 Cloudflare Worker 思路）
 export default async function handler(request) {
   try {
-    // 修复：Vercel 中 request.url 只包含路径，需补全基址
     const url = new URL(request.url, `https://${request.headers.get('host') || 'localhost'}`);
+    const path = url.pathname;
 
     // 根路径 → 导航页
-    if (url.pathname === '/' || url.pathname === '') {
+    if (path === '/' || path === '') {
       return new Response(getNavPage(), {
         headers: { 'Content-Type': 'text/html; charset=utf-8' }
       });
     }
 
-    const pathParts = url.pathname.split('/').filter(Boolean);
-    if (pathParts.length === 0) {
-      return new Response('Bad Request', { status: 400 });
-    }
+    // 只处理以白名单域名开头的路径
+    const allowedPrefixes = [
+      '/github.com',
+      '/api.github.com',
+      '/raw.githubusercontent.com',
+      '/codeload.github.com',
+      '/objects.githubusercontent.com',
+      '/camo.githubusercontent.com',
+      '/avatars.githubusercontent.com'
+    ];
 
-    const firstSegment = pathParts[0];
-    const allowedHosts = ['github.com', 'api.github.com', 'raw.githubusercontent.com', 'codeload.github.com', 'objects.githubusercontent.com', 'camo.githubusercontent.com', 'avatars.githubusercontent.com'];
-
-    let targetHost;
-    if (allowedHosts.includes(firstSegment)) {
-      targetHost = firstSegment;
-    } else {
-      targetHost = 'github.com'; // 默认
-    }
-
-    // 构建上游 URL：去掉代理前缀，还原真实路径
-    let upstreamPath = url.pathname;
-    for (const host of allowedHosts) {
-      if (upstreamPath.startsWith('/' + host)) {
-        upstreamPath = upstreamPath.slice(host.length + 1) || '/';
+    let matchedPrefix = null;
+    for (const prefix of allowedPrefixes) {
+      if (path.startsWith(prefix + '/') || path === prefix) {
+        matchedPrefix = prefix;
         break;
       }
     }
-    const upstreamUrl = `https://${targetHost}${upstreamPath}${url.search}`;
 
-    // 构建新请求（核心：保留原始请求的方法和主体，手动处理重定向）
+    if (!matchedPrefix) {
+      // 路径不符合格式，返回导航页
+      return new Response(getNavPage(), {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
+    }
+
+    // 提取目标域名和剩余路径
+    const targetHost = matchedPrefix.slice(1); // 去掉开头的 /
+    let remainingPath = path.slice(matchedPrefix.length) || '/';
+    // 如果 remainingPath 为空，设为 /
+    if (remainingPath === '') remainingPath = '/';
+
+    const upstreamUrl = `https://${targetHost}${remainingPath}${url.search}`;
+
+    // 构建新请求（保留原始方法、头、body，手动处理重定向）
     const newReq = new Request(upstreamUrl, {
       method: request.method,
       headers: request.headers,
-      // 注意：Vercel 的 request.body 是 ReadableStream，直接传递可能不稳定
-      // 改为读取为 ArrayBuffer 再传入（兼容性更好）
-      body: request.method !== 'GET' && request.method !== 'HEAD' ? await request.arrayBuffer() : null,
+      body: request.method === 'GET' || request.method === 'HEAD' ? null : request.body,
       redirect: 'manual'
     });
 
@@ -61,7 +67,6 @@ export default async function handler(request) {
     responseHeaders.delete('content-security-policy-report-only');
     responseHeaders.delete('clear-site-data');
     responseHeaders.set('access-control-allow-origin', '*');
-    // 注意：access-control-allow-credentials 不能与 * 同时使用，故移除
     responseHeaders.delete('access-control-allow-credentials');
 
     // 处理重定向 Location
@@ -120,15 +125,15 @@ export default async function handler(request) {
       });
     }
 
-    // 非 HTML：直接流式返回（文件下载、API JSON 等）
+    // 非 HTML：直接流式返回
     return new Response(response.body, {
       status: response.status,
       headers: responseHeaders
     });
 
   } catch (err) {
-    console.error(err);
-    return new 应答('Proxy Error: ' + err.message, { status: 500 });
+    console.error('Proxy Error:', err);
+    return new 应答('Internal Server Error: ' + err.message, { status: 500 });
   }
 }
 
