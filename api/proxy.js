@@ -1,4 +1,4 @@
-// api/proxy.js - 最终版，全面拦截 GitHub API 请求
+// api/proxy.js - 终极版：服务端全面替换 + 前端劫持双保险
 const ALLOWED = [
   'github.com',
   'api.github.com',
@@ -104,41 +104,41 @@ module.exports = async (req, res) => {
     if (ct.includes('text/html')) {
       let html = await upRes.text();
 
-      // 1. 替换所有绝对 URL 为代理路径
-      html = html.replace(/https:\/\/github\.com/g, '/github.com');
+      // ★★★ 核心修复：使用正则替换 HTML 中所有出现的 github.com 和 api.github.com 的绝对 URL ★★★
+      // 这包括属性值、内联脚本字符串等所有位置
       html = html.replace(/https:\/\/api\.github\.com/g, '/api.github.com');
+      html = html.replace(/https:\/\/github\.com/g, '/github.com');
       html = html.replace(/https:\/\/raw\.githubusercontent\.com/g, '/raw.githubusercontent.com');
       html = html.replace(/https:\/\/codeload\.github\.com/g, '/codeload.github.com');
+      // 还可以补充其他子域名
+      html = html.replace(/https:\/\/camo\.githubusercontent\.com/g, '/camo.githubusercontent.com');
+      html = html.replace(/https:\/\/avatars\.githubusercontent\.com/g, '/avatars.githubusercontent.com');
+      html = html.replace(/https:\/\/objects\.githubusercontent\.com/g, '/objects.githubusercontent.com');
 
-      // 2. 注入全面拦截脚本（包含 MutationObserver 和相对路径修复）
+      // 注入前端劫持脚本（作为最后一道防线，防止动态生成的 URL 未被替换）
       const injectScript = `
         <script>
           (function() {
-            // 辅助函数：将 api.github.com 的绝对路径转为代理路径
-            function proxyUrl(url) {
-              if (typeof url !== 'string') return url;
-              // 如果已经是 /api.github.com 开头，保持不变
-              if (url.startsWith('/api.github.com')) return url;
-              // 如果包含 api.github.com，替换
-              if (url.includes('api.github.com')) {
-                return url.replace(/https?:\\/\\/api\\.github\\.com/g, '/api.github.com');
-              }
-              // 如果包含 github.com 且是绝对路径，替换
-              if (url.includes('github.com') && (url.startsWith('http://') || url.startsWith('https://'))) {
-                return url.replace(/https?:\\/\\/([^\\/]+)/, '/$1');
-              }
-              return url;
+            // 辅助函数：将字符串中的 github.com 绝对 URL 替换为代理路径
+            function proxyUrls(str) {
+              if (typeof str !== 'string') return str;
+              return str
+                .replace(/https:\\/\\/api\\.github\\.com/g, '/api.github.com')
+                .replace(/https:\\/\\/github\\.com/g, '/github.com')
+                .replace(/https:\\/\\/raw\\.githubusercontent\\.com/g, '/raw.githubusercontent.com')
+                .replace(/https:\\/\\/codeload\\.github\\.com/g, '/codeload.github.com');
             }
 
             // 劫持 fetch
             var origFetch = window.fetch;
             window.fetch = function(input, init) {
               if (typeof input === 'string') {
-                input = proxyUrl(input);
+                input = proxyUrls(input);
               } else if (input instanceof Request) {
-                // 如果是 Request 对象，修改其 url 属性（可能需要克隆）
-                var newInput = new Request(proxyUrl(input.url), input);
-                return origFetch.call(this, newInput, init);
+                var newUrl = proxyUrls(input.url);
+                if (newUrl !== input.url) {
+                  input = new Request(newUrl, input);
+                }
               }
               return origFetch.call(this, input, init);
             };
@@ -146,39 +146,18 @@ module.exports = async (req, res) => {
             // 劫持 XMLHttpRequest
             var origOpen = XMLHttpRequest.prototype.open;
             XMLHttpRequest.prototype.open = function(method, url) {
-              arguments[1] = proxyUrl(url);
+              arguments[1] = proxyUrls(url);
               return origOpen.apply(this, arguments);
             };
 
-            // 使用 MutationObserver 监控动态添加的资源（如 script, img, link）
-            var observer = new MutationObserver(function(mutations) {
-              mutations.forEach(function(mutation) {
-                mutation.addedNodes.forEach(function(node) {
-                  if (node.nodeType === 1) { // Element
-                    // 处理 <script src="...">
-                    if (node.tagName === 'SCRIPT' && node.src) {
-                      node.src = proxyUrl(node.src);
-                    }
-                    // 处理 <img src="...">
-                    if (node.tagName === 'IMG' && node.src) {
-                      node.src = proxyUrl(node.src);
-                    }
-                    // 处理 <link href="...">
-                    if (node.tagName === 'LINK' && node.href) {
-                      node.href = proxyUrl(node.href);
-                    }
-                    // 处理 <iframe src="...">
-                    if (node.tagName === 'IFRAME' && node.src) {
-                      node.src = proxyUrl(node.src);
-                    }
-                  }
-                });
-              });
-            });
-            observer.observe(document.documentElement, {
-              childList: true,
-              subtree: true
-            });
+            // 劫持 EventSource（如果使用）
+            if (window.EventSource) {
+              var origEventSource = window.EventSource;
+              window.EventSource = function(url, eventSourceInitDict) {
+                url = proxyUrls(url);
+                return new origEventSource(url, eventSourceInitDict);
+              };
+            }
           })();
         </script>
       `;
