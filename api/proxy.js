@@ -1,164 +1,139 @@
-import fetch from 'node-fetch';
-
-// 允许代理的域名白名单
-var ALLOWED = [
-  'huggingface.co',
-  'github.com',
-  'raw.githubusercontent.com',
-  'codeload.github.com',
-  'objects.githubusercontent.com',
-  'vercel.com',
-  'dash.cloudflare.com',
-  'drive.internxt.com'
-];
-
-function isAllowed(hostname) {
-  for (var i = 0; i < ALLOWED.length; i++) {
-    var domain = ALLOWED[i];
-    if (hostname === domain) return true;
-    if (hostname.endsWith('.' + domain)) return true;
-    // 特殊处理 huggingface.co 的 *.hf.co 子域名
-    if (domain === 'huggingface.co') {
-      var parts = hostname.split('.');
-      if (parts.length >= 3) {
-        if (parts.slice(-2).join('.') === 'hf.co') return true;
-      }
-    }
-  }
-  return false;
-}
-
-export default async function handler(req, res) {
+// api/proxy.js - CommonJS 版本，无外部依赖
+module。exports = async (req, res) => {
   try {
-    var url = new URL(req.url, 'http://' + req.headers.host);
-    var target = url.searchParams.get('to');
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    let target = url.searchParams.get('to');
 
-    // 支持 /huggingface.co/models 快捷格式
+    // 如果没有 ?to= 参数，尝试从路径解析（如 /huggingface.co/models）
     if (!target) {
-      var match = url.pathname.match(/^\/([^\/]+)(\/.*)?$/);
-      if (match && isAllowed(match[1])) {
-        target = 'https://' + match[1] + (match[2] || '/') + url.search;
+      const match = url.pathname.match(/^\/([^\/]+)(\/.*)?$/);
+      if (match) {
+        const domain = match[1];
+        const rest = match[2] || '/';
+        target = `https://${domain}${rest}${url.search}`;
       }
     }
 
-    // 没有目标 → 导航页
+    // 没有目标 → 返回导航页
     if (!target) {
       return sendNavPage(res);
     }
 
-    var targetUrl = new URL(target);
-
-    if (!isAllowed(targetUrl.hostname)) {
-      return res.status(403).send('Domain not allowed: ' + targetUrl.hostname);
+    const targetUrl = new URL(target);
+    const allowedDomains = ['huggingface.co', 'github.com', 'vercel.com', 'dash.cloudflare.com', 'drive.internxt.com'];
+    const isAllowed = allowedDomains.some(d => targetUrl.hostname === d || targetUrl.hostname.endsWith('.' + d));
+    if (!isAllowed) {
+      return res.status(403).send('Domain not allowed');
     }
 
     // 构造请求头
-    var headers = new Headers();
-    Object.entries(req.headers).forEach(function(entry) {
-      var key = entry[0];
-      var value = entry[1];
-      var lower = key.toLowerCase();
-      if (['host', 'cf-connecting-ip', 'x-vercel-id', 'connection', 'content-length'].indexOf(lower) !== -1) {
-        return;
-      }
-      headers.set(key, value);
-    });
-    headers.set('Host', targetUrl.hostname);
-    headers.set('Origin', targetUrl.origin);
-    headers.set('User-Agent', req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+    const headers = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      const lower = key.toLowerCase();
+      if (['host', 'cf-connecting-ip', 'x-vercel-id', 'connection', 'content-length'].includes(lower)) continue;
+      headers[key] = value;
+    }
+    headers['Host'] = targetUrl.hostname;
 
     // 发起请求
-    var fetchOptions = {
+    const upstreamRes = await fetch(targetUrl.toString(), {
       method: req.method,
-      headers: headers,
-      redirect: 'manual'
-    };
-
-    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
-      fetchOptions.body = req.body;
-    }
-
-    var upstreamRes = await fetch(targetUrl.toString(), fetchOptions);
-
-    // 处理 3xx 重定向
-    if ([301, 302, 303, 307, 308].indexOf(upstreamRes.status) !== -1) {
-      var location = upstreamRes.headers.get('location');
-      if (location) {
-        try {
-          var locUrl = new URL(location, targetUrl);
-          if (isAllowed(locUrl.hostname)) {
-            var newLocation = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
-            res.setHeader('Location', newLocation);
-            return res.status(upstreamRes.status).end();
-          }
-        } catch (e) {}
-      }
-      return res.status(upstreamRes.status).end();
-    }
-
-    // 构造响应头
-    var respHeaders = {};
-    upstreamRes.headers.forEach(function(value, key) {
-      var lower = key.toLowerCase();
-      if (['content-encoding', 'transfer-encoding', 'content-security-policy',
-           'content-security-policy-report-only', 'cross-origin-resource-policy'].indexOf(lower) !== -1) {
-        return;
-      }
-      respHeaders[key] = value;
+      headers,
+      body: (req.method !== 'GET' && req.method !== 'HEAD') ? req : undefined,
+      redirect: 'manual',
     });
 
-    // 删除 CSP，添加 CORS
+    // 处理 3xx 重定向
+    if ([301, 302, 303, 307, 308].includes(upstreamRes.status)) {
+      const location = upstreamRes.headers.get('location');
+      if (location) {
+        try {
+          const locUrl = new URL(location, targetUrl);
+          if (allowedDomains.some(d => locUrl.hostname === d || locUrl.hostname.endsWith('.' + d))) {
+            const newLoc = `/${locUrl.hostname}${locUrl.pathname}${locUrl.search}`;
+            res.writeHead(upstreamRes.status, { 'Location': newLoc });
+            return res.end();
+          }
+        } catch {}
+      }
+      res.writeHead(upstreamRes.status);
+      return res.end();
+    }
+
+    // 透传响应
+    const respHeaders = {};
+    upstreamRes.headers.forEach((value, key) => {
+      const lower = key.toLowerCase();
+      if (['content-encoding', 'transfer-encoding', 'content-security-policy',
+           'content-security-policy-report-only', 'cross-origin-resource-policy'].includes(lower)) return;
+      respHeaders[key] = value;
+    });
     delete respHeaders['content-security-policy'];
     delete respHeaders['content-security-policy-report-only'];
     respHeaders['Access-Control-Allow-Origin'] = '*';
 
-    // Set-Cookie 重写（去掉 Domain 限制）
-    var setCookie = upstreamRes.headers.get('set-cookie');
-    if (setCookie) {
-      respHeaders['Set-Cookie'] = setCookie.replace(/Domain=[^;]+;/gi, '');
+    // 如果是 HTML，注入修复脚本
+    const contentType = respHeaders['Content-Type'] || respHeaders['content-type'] || '';
+    if (contentType.includes('text/html')) {
+      let html = await upstreamRes.text();
+      const fixScript = `
+        <script>
+          (function() {
+            const basePath = window.location.pathname.split('/').slice(0, 2).join('/') + '/';
+            document.addEventListener('click', function(e) {
+              let link = e.target.closest('a');
+              if (link && link.href) {
+                try {
+                  const linkUrl = new URL(link.href);
+                  if (linkUrl.hostname === '${targetUrl.hostname}' || linkUrl.hostname.endsWith('.${targetUrl.hostname.split('.').slice(-2).join('.')}')) {
+                    e.preventDefault();
+                    window.location.href = basePath + linkUrl.pathname.replace(/^\\//, '') + linkUrl.search;
+                  }
+                } catch {}
+              }
+            });
+          })();
+        </script>`;
+      html = html.replace('</body>', fixScript + '</body>');
+      res.writeHead(upstreamRes.status, respHeaders);
+      return res.end(html);
     }
 
-    // 判断是否为 HTML
-    var contentType = (respHeaders['Content-Type'] || '').toLowerCase();
-    var isHtml = contentType.indexOf('text/html') !== -1;
-
-    if (isHtml) {
-      var text = await upstreamRes.text();
-
-      // 注入 JS 修复相对路径跳转
-      var hostname = targetUrl.hostname;
-      var fixScript = '<script>(function(){var b=window.location.pathname.split("/").slice(0,2).join("/")+"/";var h="' + hostname + '";document.addEventListener("click",function(e){var a=e.target.closest("a");if(a&&a.href){try{var u=new URL(a.href);if(u.hostname===h||u.hostname.endsWith("."+h.split(".").slice(-2).join("."))){e.preventDefault();window.location.href=b+u.pathname.replace(/^\\//,"")+u.search;}}catch(err){}}});document.addEventListener("submit",function(e){var f=e.target;if(f.action&&f.action.indexOf(h)!==-1){e.preventDefault();var d=new FormData(f);fetch(b+new URL(f.action).pathname,{method:"POST",body:d}).then(function(r){return r.text();}).then(function(htm){document.open("text/html","replace");document.write(htm);document.close();});});})();</script>';
-
-      text = text.replace('</body>', fixScript + '</body>');
-      respHeaders['Content-Type'] = 'text/html; charset=utf-8';
-      res.writeHead(upstreamRes.status, respHeaders);
-      res.end(text);
-    } else {
-      // 非 HTML 流式传输
-      res.writeHead(upstreamRes.status, respHeaders);
-      var reader = upstreamRes.body.getReader();
-      function pump() {
-        reader.read().then(function(result) {
-          if (result.done) return res.end();
-          res.write(result.value);
-          pump();
-        }).catch(function() {
-          if (!res.writableEnded) res.end();
-        });
-      }
+    // 非 HTML 流式传输
+    res.writeHead(upstreamRes.status, respHeaders);
+    const reader = upstreamRes.body.getReader();
+    const pump = () => reader.read().then(({ done, value }) => {
+      if (done) return res.end();
+      res.write(value);
       pump();
-    }
+    });
+    pump();
 
   } catch (err) {
-    console.error('PROXY_ERROR:', err);
+    console.error(err);
     if (!res.headersSent) {
-      res.status(500).send('Internal Server Error: ' + err.message);
+      res.status(500).send('Internal Error: ' + err.message);
     }
   }
-}
+};
 
 function sendNavPage(res) {
-  var html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>反代导航</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:linear-gradient(135deg,#0f172a,#1e293b);min-height:100vh;display:flex;align-items:center;justify-content:center;color:#e2e8f0;padding:20px}.container{max-width:900px;width:100%;text-align:center}h1{font-size:2.2rem;margin-bottom:.5rem;color:#fff}.sub{color:#94a3b8;margin-bottom:2.5rem}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}.card{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:28px 20px;text-decoration:none;color:#e2e8f0;transition:.25s;border-top:3px solid #6366f1}.card:hover{transform:translateY(-6px);border-color:#6366f1;box-shadow:0 12px 40px rgba(0,0,0,.4)}.icon{font-size:2.8rem;margin-bottom:12px}.card h3{font-size:1.2rem;margin-bottom:6px;color:#fff}.card span{font-size:.85rem;color:#94a3b8}.footer{margin-top:3rem;font-size:.8rem;color:#475569}</style></head><body><div class="container"><h1>🧭 反代导航</h1><p class="sub">Vercel Hobby · 100万请求/月 · 100GB 带宽</p><div class="grid"><a class="card" href="/api/proxy?to=https://huggingface.co/" style="border-top-color:#ff9d00"><div class="icon">🤗</div><h3>Hugging Face</h3><span>huggingface.co</span></a><a class="card" href="/api/proxy?to=https://github.com/" style="border-top-color:#8b949e"><div class="icon">🐙</div><h3>GitHub</h3><span>github.com</span></a><a class="card" href="/api/proxy?to=https://vercel.com/" style="border-top-color:#000"><div class="icon">▲</div><h3>Vercel</h3><span>vercel.com</span></a><a class="card" href="/api/proxy?to=https://drive.internxt.com/" style="border-top-color:#6366f1"><div class="icon">☁️</div><h3>Internxt Drive</h3><span>drive.internxt.com</span></a></div><p class="footer">点击卡片进入对应网站 · 仅限个人使用</p></div></body></html>';
+  const html = `<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<title>反代导航</title>
+<style>
+body{font-family:sans-serif;background:#f1f5f9;padding:2rem;text-align:center}
+.card{display:inline-block;margin:1rem;padding:2rem;background:white;border-radius:12px;text-decoration:none;color:#333;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.15)}
+.icon{font-size:2.5rem;display:block;margin-bottom:0.5rem}
+</style></head>
+<body>
+<h1>🌐 反代导航</h1>
+<a class="card" href="/huggingface.co/"><span class="icon">🤗</span><h3>Hugging Face</h3></a>
+<a class="card" href="/github.com/"><span class="icon">🐙</span><h3>GitHub</h3></a>
+<a class="card" href="/vercel.com/"><span class="icon">▲</span><h3>Vercel</h3></a>
+<a class="card" href="/drive.internxt.com/"><span class="icon">☁️</span><h3>Internxt</h3></a>
+</body></html>`;
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.status(200).send(html);
 }
