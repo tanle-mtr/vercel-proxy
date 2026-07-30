@@ -1,206 +1,201 @@
-// api/proxy.js - 终极版：服务端全面替换 + 前端劫持双保险
-const ALLOWED = [
-  'github.com',
-  'api.github.com',
-  'raw.githubusercontent.com',
-  'codeload.github.com',
-  'objects.githubusercontent.com',
-  'camo.githubusercontent.com',
-  'avatars.githubusercontent.com',
-  'gist.github.com'
-];
+// Vercel Functions 使用 Web Standard API
+// 参考 Cloudflare Worker 的反代思路：直接改写 url.hostname，保留原始请求
+export const config = { runtime: 'nodejs' };
 
-function isAllowed(host) {
-  return ALLOWED.some(d => host === d || host.endsWith('.' + d));
+const UPSTREAM = 'github.com';
+const UPSTREAM_API = 'api.github.com';
+
+// 文本替换字典：把 github.com 绝对 URL 替换成我们的代理路径
+function replaceText(text, customDomain) {
+  // 替换 html/css/js 中的绝对 URL 为代理相对路径
+  text = text.replace(/https:\/\/github\.com/g, '/github.com');
+  text = text.replace(/https:\/\/api\.github\.com/g, '/api.github.com');
+  text = text.replace(/https:\/\/raw\.githubusercontent\.com/g, '/raw.githubusercontent.com');
+  text = text.replace(/https:\/\/codeload\.github\.com/g, '/codeload.github.com');
+  text = text.replace(/https:\/\/objects\.githubusercontent\.com/g, '/objects.githubusercontent.com');
+  text = text.replace(/https:\/\/avatars\.githubusercontent\.com/g, '/avatars.githubusercontent.com');
+  text = text.replace(/https:\/\/camo\.githubusercontent\.com/g, '/camo.githubusercontent.com');
+  return text;
 }
 
-module.exports = async (req, res) => {
-  try {
-    const reqUrl = new URL(req.url, `http://${req.headers.host}`);
-    const pathParts = reqUrl.pathname.split('/').filter(Boolean);
-
-    // 根路径 → 导航页
-    if (pathParts.length === 0) {
-      return sendNav(res);
-    }
-
-    const potentialHost = pathParts[0];
-    let targetHost, targetPath;
-
-    if (isAllowed(potentialHost)) {
-      targetHost = potentialHost;
-      targetPath = '/' + pathParts.slice(1).join('/');
-    } else {
-      targetHost = 'github.com';
-      targetPath = reqUrl.pathname;
-    }
-
-    if (!isAllowed(targetHost)) {
-      res.statusCode = 403;
-      return res.end('Forbidden');
-    }
-
-    const upstreamUrl = `https://${targetHost}${targetPath}${reqUrl.search}`;
-
-    // 构造请求头
-    const headers = new Headers();
-    for (const [k, v] of Object.entries(req.headers)) {
-      const low = k.toLowerCase();
-      if (['host', 'cf-connecting-ip', 'x-vercel-id', 'connection', 'content-length'].includes(low)) continue;
-      headers.set(k, v);
-    }
-    headers.set('Host', targetHost);
-    headers.set('Origin', `https://${targetHost}`);
-    headers.set('Referer', `https://${targetHost}/`);
-    headers.set('User-Agent', req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
-
-    // 发起请求，手动处理重定向
-    const fetchOpts = {
-      method: req.method,
-      headers,
-      redirect: 'manual'
-    };
-    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
-      const buf = await req.arrayBuffer();
-      fetchOpts.body = Buffer.from(buf);
-    }
-
-    const upRes = await fetch(upstreamUrl, fetchOpts);
-    const status = upRes.status;
-
-    // 处理重定向（301/302/303/307/308）
-    if ([301, 302, 303, 307, 308].includes(status)) {
-      const loc = upRes.headers.get('location');
-      if (loc) {
-        try {
-          const locUrl = new URL(loc, upstreamUrl);
-          if (isAllowed(locUrl.hostname)) {
-            const newLoc = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
-            res.statusCode = status;
-            res.setHeader('Location', newLoc);
-            return res.end();
-          }
-        } catch {}
-      }
-      res.statusCode = status;
-      res.setHeader('Location', loc);
-      return res.end();
-    }
-
-    // 收集响应头
-    const respHeaders = {};
-    upRes.headers.forEach((val, key) => {
-      const low = key.toLowerCase();
-      if (['content-encoding', 'transfer-encoding', 'content-security-policy',
-           'content-security-policy-report-only', 'cross-origin-resource-policy'].includes(low)) return;
-      respHeaders[key] = val;
+export default async function handler(request) {
+  const url = new URL(request.url);
+  
+  // 根路径 → 导航页
+  if (url.pathname === '/' || url.pathname === '') {
+    return new Response(getNavPage(), {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
     });
-    delete respHeaders['content-security-policy'];
-    delete respHeaders['content-security-policy-report-only'];
-    respHeaders['Access-Control-Allow-Origin'] = '*';
+  }
 
-    const ct = (respHeaders['Content-Type'] || '').toLowerCase();
+  // 解析路径：/github.com/xxx → hostname=github.com, path=/xxx
+  // 或者 /api.github.com/xxx → hostname=api.github.com
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  if (pathParts.length === 0) {
+    return new Response('Bad Request', { status: 400 });
+  }
 
-    if (ct.includes('text/html')) {
-      let html = await upRes.text();
+  const firstSegment = pathParts[0];
+  
+  // 判断是否是我们代理的 github 域名
+  let targetHost;
+  if (firstSegment === 'github.com' || firstSegment === 'api.github.com' || 
+      firstSegment === 'raw.githubusercontent.com' || firstSegment === 'codeload.github.com' ||
+      firstSegment === 'objects.githubusercontent.com') {
+    targetHost = firstSegment;
+  } else {
+    // 默认当作 github.com 处理（如 /owner/repo/...）
+    targetHost = 'github.com';
+  }
 
-      // ★★★ 核心修复：使用正则替换 HTML 中所有出现的 github.com 和 api.github.com 的绝对 URL ★★★
-      // 这包括属性值、内联脚本字符串等所有位置
-      html = html.replace(/https:\/\/api\.github\.com/g, '/api.github.com');
-      html = html.replace(/https:\/\/github\.com/g, '/github.com');
-      html = html.replace(/https:\/\/raw\.githubusercontent\.com/g, '/raw.githubusercontent.com');
-      html = html.replace(/https:\/\/codeload\.github\.com/g, '/codeload.github.com');
-      // 还可以补充其他子域名
-      html = html.replace(/https:\/\/camo\.githubusercontent\.com/g, '/camo.githubusercontent.com');
-      html = html.replace(/https:\/\/avatars\.githubusercontent\.com/g, '/avatars.githubusercontent.com');
-      html = html.replace(/https:\/\/objects\.githubusercontent\.com/g, '/objects.githubusercontent.com');
+  // 构建上游 URL（这是关键：参考 CF Worker 的做法）
+  const upstreamUrl = new URL(url.toString());
+  // 把路径中的 /github.com 前缀去掉，还原成真实路径
+  if (firstSegment === 'github.com') {
+    upstreamUrl.pathname = url.pathname.replace(/^\/github\.com/, '') || '/';
+  } else if (firstSegment === 'api.github.com') {
+    upstreamUrl.pathname = url.pathname.replace(/^\/api\.github\.com/, '') || '/';
+  } else if (firstSegment === 'raw.githubusercontent.com') {
+    upstreamUrl.pathname = url.pathname.replace(/^\/raw\.githubusercontent\.com/, '') || '/';
+  } else if (firstSegment === 'codeload.github.com') {
+    upstreamUrl.pathname = url.pathname.replace(/^\/codeload\.github\.com/, '') || '/';
+  } else if (firstSegment === 'objects.githubusercontent.com') {
+    upstreamUrl.pathname = url.pathname.replace(/^\/objects\.githubusercontent\.com/, '') || '/';
+  }
+  upstreamUrl.hostname = targetHost;
+  upstreamUrl.protocol = 'https:';
 
-      // 注入前端劫持脚本（作为最后一道防线，防止动态生成的 URL 未被替换）
-      const injectScript = `
+  // 构建新请求（参考 CF Worker：new Request(url, request)）
+  const newRequest = new Request(upstreamUrl, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
+    redirect: 'manual'  // 手动处理重定向，防止跳出代理
+  });
+  
+  // 设置关键请求头（CF Worker 的核心）
+  newRequest.headers.set('Host', targetHost);
+  newRequest.headers.set('Origin', `https://${targetHost}`);
+  newRequest.headers.set('Referer', `https://${targetHost}/`);
+  // 删除可能干扰的头
+  newRequest.headers.delete('cf-connecting-ip');
+  newRequest.headers.delete('x-vercel-ip-address');
+
+  try {
+    const response = await fetch(newRequest);
+    let responseHeaders = new Headers(response.headers);
+
+    // 删除危险的响应头
+    responseHeaders.delete('content-security-policy');
+    responseHeaders.delete('content-security-policy-report-only');
+    responseHeaders.delete('clear-site-data');
+    responseHeaders.set('access-control-allow-origin', '*');
+    responseHeaders.set('access-control-allow-credentials', 'true');
+
+    // 处理 3xx 重定向：把 Location 改写回代理路径（CF Worker 的核心逻辑）
+    const location = responseHeaders.get('location');
+    if (location) {
+      try {
+        const locUrl = new URL(location);
+        // 如果跳转到 github 域内，改写成代理路径
+        if (locUrl.hostname.includes('github.com') || locUrl.hostname.includes('githubusercontent.com')) {
+          const newLoc = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
+          responseHeaders.set('location', newLoc);
+        }
+      } catch {}
+    }
+
+    // 处理 HTML 内容：替换文本中的绝对 URL
+    const contentType = responseHeaders.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      let text = await response.text();
+      text = replaceText(text, url.host);
+      
+      // 注入轻量级修复脚本（作为最后一道防线）
+      const fixScript = `
         <script>
           (function() {
-            // 辅助函数：将字符串中的 github.com 绝对 URL 替换为代理路径
-            function proxyUrls(str) {
-              if (typeof str !== 'string') return str;
-              return str
-                .replace(/https:\\/\\/api\\.github\\.com/g, '/api.github.com')
-                .replace(/https:\\/\\/github\\.com/g, '/github.com')
-                .replace(/https:\\/\\/raw\\.githubusercontent\\.com/g, '/raw.githubusercontent.com')
-                .replace(/https:\\/\\/codeload\\.github\\.com/g, '/codeload.github.com');
-            }
-
-            // 劫持 fetch
-            var origFetch = window.fetch;
-            window.fetch = function(input, init) {
-              if (typeof input === 'string') {
-                input = proxyUrls(input);
-              } else if (input instanceof Request) {
-                var newUrl = proxyUrls(input.url);
-                if (newUrl !== input.url) {
-                  input = new Request(newUrl, input);
-                }
+            var proxyMap = {
+              'https://github.com': '/github.com',
+              'https://api.github.com': '/api.github.com',
+              'https://raw.githubusercontent.com': '/raw.githubusercontent.com',
+              'https://codeload.github.com': '/codeload.github.com'
+            };
+            function proxyUrl(u) {
+              for (var k in proxyMap) {
+                if (u.indexOf(k) === 0) return proxyMap[k] + u.substring(k.length);
               }
-              return origFetch.call(this, input, init);
-            };
-
-            // 劫持 XMLHttpRequest
-            var origOpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function(method, url) {
-              arguments[1] = proxyUrls(url);
-              return origOpen.apply(this, arguments);
-            };
-
-            // 劫持 EventSource（如果使用）
-            if (window.EventSource) {
-              var origEventSource = window.EventSource;
-              window.EventSource = function(url, eventSourceInitDict) {
-                url = proxyUrls(url);
-                return new origEventSource(url, eventSourceInitDict);
-              };
+              return u;
             }
+            // 劫持 fetch
+            var _fetch = window.fetch;
+            window.fetch = function(input, init) {
+              if (typeof input === 'string') input = proxyUrl(input);
+              else if (input instanceof Request) input = new Request(proxyUrl(input.url), input);
+              return _fetch.call(this, input, init);
+            };
+            // 劫持 XHR
+            var _open = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(m, u) {
+              arguments[1] = proxyUrl(u);
+              return _open.apply(this, arguments);
+            };
           })();
         </script>
       `;
-      html = html.replace('</head>', injectScript + '</head>');
-
-      res.statusCode = status;
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      return res.end(html);
+      text = text.replace('</head>', fixScript + '</head>');
+      
+      return new Response(text, {
+        status: response.status,
+        headers: responseHeaders
+      });
     }
 
-    // 非 HTML（JS/CSS/图片/文件）
-    res.statusCode = status;
-    Object.keys(respHeaders).forEach(k => res.setHeader(k, respHeaders[k]));
-    const buf = await upRes.arrayBuffer();
-    res.end(Buffer.from(buf));
+    // 非 HTML：直接返回（文件下载、API JSON 等）
+    return new Response(response.body, {
+      status: response.status,
+      headers: responseHeaders
+    });
 
   } catch (err) {
-    console.error('FATAL:', err);
-    if (!res.headersSent) {
-      res.statusCode = 500;
-      res.end('Server Error: ' + err.message);
-    }
+    return new 应答('Proxy Error: ' + err.message, { status: 500 });
   }
-};
+}
 
-function sendNav(res) {
-  const html = `<!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><title>GitHub 代理</title>
+function getNavPage() {
+  return `<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GitHub 代理</title>
 <style>
-body{font-family:-apple-system,sans-serif;background:#f6f8fa;padding:2rem;text-align:center;color:#24292e}
-.card{display:inline-block;margin:1rem;padding:2rem;background:white;border:1px solid #d0d7de;border-radius:12px;text-decoration:none;color:#24292e;transition:all .2s}
-.card:hover{border-color:#0969da;box-shadow:0 4px 12px rgba(9,105,218,.15);transform:translateY(-2px)}
-.icon{font-size:2.5rem;display:block;margin-bottom:.5rem}
-h1{margin-bottom:1rem}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.container{max-width:800px;text-align:center}
+h1{color:#fff;font-size:2.5rem;margin-bottom:1rem}
+h1 span{color:#58a6ff}
+.sub{color:#8b949e;margin-bottom:2rem}
+.card{display:inline-block;margin:8px;padding:20px;background:#161b22;border:1px solid #30363d;border-radius:12px;text-decoration:none;color:#58a6ff;min-width:200px}
+.card:hover{border-color:#58a6ff}
+.card h3{margin-bottom:8px}
+.card p{color:#8b949e;font-size:.85rem}
+.tips{margin-top:2rem;padding:16px;background:#161b22;border-radius:8px;text-align:left;color:#8b949e;font-size:.85rem;line-height:1.6}
+code{background:#0d1117;padding:2px 6px;border-radius:4px;color:#79c0ff}
 </style></head>
-<body>
-<h1>🐙 GitHub 代理</h1>
-<a class="card" href="/github.com/"><span class="icon">📦</span><h3>GitHub.com</h3></a>
-<a class="card" href="/api.github.com/"><span class="icon">🔌</span><h3>GitHub API</h3></a>
-<a class="card" href="/raw.githubusercontent.com/"><span class="icon">📄</span><h3>Raw Files</h3></a>
-<p style="margin-top:2rem;color:#656d76;font-size:.9rem">支持任意 GitHub 仓库浏览和文件下载</p>
-</body></html>`;
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.statusCode = 200;
-  res.end(html);
+<body><div class="container">
+<h1><span>⬇️</span> GitHub 代理</h1>
+<p class="sub">基于 Vercel Functions 的 GitHub 反代（参考 Cloudflare Worker 思路）</p>
+<a class="card" href="/github.com/"><h3>📦 仓库浏览</h3><p>/github.com/owner/repo</p></a>
+<a class="card" href="/api.github.com/"><h3>🔌 API 访问</h3><p>/api.github.com/repos/...</p></a>
+<a class="card" href="/raw.githubusercontent.com/"><h3>📄 Raw 文件</h3><p>/raw.githubusercontent.com/...</p></a>
+<div class="tips">
+<strong>💡 使用方式：</strong><br>
+• 仓库：<code>/github.com/vercel/next.js</code><br>
+• Release 下载：<code>/github.com/owner/repo/releases/download/v1.0/file.zip</code><br>
+• Archive：<code>/github.com/owner/repo/archive/refs/heads/main.zip</code><br>
+• Raw：<code>/raw.githubusercontent.com/owner/repo/branch/file</code><br>
+• aria2c：<code>aria2c -x 16 -s 16 -c "https://你的域名/github.com/owner/repo/archive/main.zip"</code><br><br>
+<strong>⚠️ 说明：</strong>GitHub 网页是重度 SPA，文件树加载依赖 <code>api.github.com</code> 的动态请求。
+本代理已参考 CF Worker 思路做底层改写，大部分场景可用。如遇复杂页面加载不全，建议直接使用 CF Worker 版本（Vercel 函数的流式处理能力有限）。
+</div>
+</div></body></html>`;
 }
