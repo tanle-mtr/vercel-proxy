@@ -1,7 +1,4 @@
-const { URL } = require('url');
-const { Buffer } = require('buffer');
-
-// 1. 白名单：只允许这些域名的请求通过
+// api/proxy.js - 稳定版，支持 GitHub 文件树展开和下载
 const ALLOWED = [
   'github.com',
   'api.github.com',
@@ -13,25 +10,16 @@ const ALLOWED = [
   'gist.github.com'
 ];
 
-function isAllowedHost(host) {
+function isAllowed(host) {
   return ALLOWED.some(d => host === d || host.endsWith('.' + d));
 }
 
 module.exports = async (req, res) => {
   try {
-    // 解析请求 URL
     const reqUrl = new URL(req.url, `http://${req.headers.host}`);
-
-    // 2. 根路径处理：返回导航页
-    if (reqUrl.pathname === '/' || reqUrl.pathname === '') {
-      return sendNav(res);
-    }
-
-    // 3. 提取目标域名和路径
-    // 支持两种格式：
-    // A) /github.com/user/repo  -> host=github.com, path=/user/repo
-    // B) /api.github.com/repos/... -> host=api.github.com, path=/repos/...
     const pathParts = reqUrl.pathname.split('/').filter(Boolean);
+
+    // 根路径 → 导航页
     if (pathParts.length === 0) {
       return sendNav(res);
     }
@@ -39,26 +27,23 @@ module.exports = async (req, res) => {
     const potentialHost = pathParts[0];
     let targetHost, targetPath;
 
-    if (isAllowedHost(potentialHost)) {
+    if (isAllowed(potentialHost)) {
       targetHost = potentialHost;
       targetPath = '/' + pathParts.slice(1).join('/');
     } else {
-      // 如果没有明确的主机前缀，默认当作 github.com 处理
-      // 例如 /owner/repo 当作 https://github.com/owner/repo
+      // 如果没有显式域名，默认当作 github.com
       targetHost = 'github.com';
       targetPath = reqUrl.pathname;
     }
 
-    // 4. 严格校验
-    if (!isAllowedHost(targetHost)) {
+    if (!isAllowed(targetHost)) {
       res.statusCode = 403;
-      return res.end('Forbidden: ' + targetHost + ' not in whitelist');
+      return res.end('Forbidden');
     }
 
-    // 5. 构建上游 URL
     const upstreamUrl = `https://${targetHost}${targetPath}${reqUrl.search}`;
-    
-    // 6. 准备请求头（关键：欺骗 GitHub 以为请求来自真实浏览器）
+
+    // 构造请求头
     const headers = new Headers();
     for (const [k, v] of Object.entries(req.headers)) {
       const low = k.toLowerCase();
@@ -68,14 +53,13 @@ module.exports = async (req, res) => {
     headers.set('Host', targetHost);
     headers.set('Origin', `https://${targetHost}`);
     headers.set('Referer', `https://${targetHost}/`);
-    // GitHub 对 UA 有要求，必须像浏览器
-    headers.set('User-Agent', req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36');
+    headers.set('User-Agent', req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
 
-    // 7. 发起请求
+    // 发起请求，手动处理重定向
     const fetchOpts = {
       method: req.method,
       headers,
-      redirect: 'manual' // 手动处理重定向
+      redirect: 'manual'
     };
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
       const buf = await req.arrayBuffer();
@@ -83,29 +67,29 @@ module.exports = async (req, res) => {
     }
 
     const upRes = await fetch(upstreamUrl, fetchOpts);
+    const status = upRes.status;
 
-    // 8. 处理重定向 (301/302/303/307/308)
-    if ([301, 302, 303, 307, 308].includes(upRes.status)) {
+    // 处理重定向（301/302/303/307/308）
+    if ([301, 302, 303, 307, 308].includes(status)) {
       const loc = upRes.headers.get('location');
       if (loc) {
         try {
           const locUrl = new URL(loc, upstreamUrl);
-          if (isAllowedHost(locUrl.hostname)) {
-            // 把 Location 改写为我们的代理路径
+          if (isAllowed(locUrl.hostname)) {
             const newLoc = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
-            res.statusCode = upRes.status;
+            res.statusCode = status;
             res.setHeader('Location', newLoc);
             return res.end();
           }
         } catch {}
       }
-      // 不在白名单的重定向，直接放行
-      res.statusCode = upRes.status;
+      // 非白名单重定向，直接透传
+      res.statusCode = status;
       res.setHeader('Location', loc);
       return res.end();
     }
 
-    // 9. 收集响应头
+    // 收集响应头
     const respHeaders = {};
     upRes.headers.forEach((val, key) => {
       const low = key.toLowerCase();
@@ -113,25 +97,22 @@ module.exports = async (req, res) => {
            'content-security-policy-report-only', 'cross-origin-resource-policy'].includes(low)) return;
       respHeaders[key] = val;
     });
-    // 删除 CSP（防止阻止我们的注入脚本）
     delete respHeaders['content-security-policy'];
     delete respHeaders['content-security-policy-report-only'];
     respHeaders['Access-Control-Allow-Origin'] = '*';
 
-    // 10. 处理 HTML：注入修复脚本 + 替换所有 github.com 链接
     const ct = (respHeaders['Content-Type'] || '').toLowerCase();
-    
+
     if (ct.includes('text/html')) {
       let html = await upRes.text();
 
-      // 关键修复：把所有 https://github.com 替换成 /github.com
-      // 这样所有链接都会走我们的代理
+      // 关键：将所有 github.com 链接替换为代理路径
       html = html.replace(/https:\/\/github\.com/g, '/github.com');
       html = html.replace(/https:\/\/api\.github\.com/g, '/api.github.com');
       html = html.replace(/https:\/\/raw\.githubusercontent\.com/g, '/raw.githubusercontent.com');
       html = html.replace(/https:\/\/codeload\.github\.com/g, '/codeload.github.com');
 
-      // 注入一个极简的修复脚本（只修复 fetch 的 Host）
+      // 注入修复脚本（劫持 fetch 和 XHR）
       const injectScript = `
         <script>
           // 修复 fetch 请求，让 api.github.com 的请求走代理
@@ -154,24 +135,18 @@ module.exports = async (req, res) => {
           };
         </script>
       `;
-
       html = html.replace('</head>', injectScript + '</head>');
 
-      res.statusCode = upRes.status;
+      res.statusCode = status;
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return res.end(html);
     }
 
-    // 11. 非 HTML（JS/CSS/图片/文件）：直接透传
-    res.statusCode = upRes.status;
+    // 非 HTML（JS/CSS/图片/文件）
+    res.statusCode = status;
     Object.keys(respHeaders).forEach(k => res.setHeader(k, respHeaders[k]));
-
-    if (upRes.body) {
-      const buf = await upRes.arrayBuffer();
-      res.end(Buffer.from(buf));
-    } else {
-      res.end();
-    }
+    const buf = await upRes.arrayBuffer();
+    res.end(Buffer.from(buf));
 
   } catch (err) {
     console.error('FATAL:', err);
