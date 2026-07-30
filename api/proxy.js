@@ -1,4 +1,4 @@
-// api/proxy.js - Vercel Node.js 运行时，使用 (req, res) 回调
+// Edge Runtime 版本，使用 Request/Response 对象
 const ALLOWED_PREFIXES = [
   '/github.com',
   '/api.github.com',
@@ -30,7 +30,7 @@ code{background:#0d1117;padding:2px 6px;border-radius:4px;color:#79c0ff}
 </style></head>
 <body><div class="container">
 <h1><span>⬇️</span> GitHub 代理</h1>
-<p class="sub">基于 Vercel Functions，参考 Cloudflare Worker 思路</p>
+<p class="sub">基于 Vercel Edge Runtime，参考 Cloudflare Worker 思路</p>
 <a class="card" href="/github.com/"><h3>📦 仓库浏览</h3><p>/github.com/owner/repo</p></a>
 <a class="card" href="/api.github.com/"><h3>🔌 API 访问</h3><p>/api.github.com/repos/...</p></a>
 <a class="card" href="/raw.githubusercontent.com/"><h3>📄 Raw 文件</h3><p>/raw.githubusercontent.com/...</p></a>
@@ -56,16 +56,16 @@ function replaceText(text) {
   return text;
 }
 
-module.exports = async (req, res) => {
+export default async function handler(request) {
   try {
-    // 解析 URL
-    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const url = new URL(request.url);
     const path = url.pathname;
 
     // 根路径 → 导航页
     if (path === '/' || path === '') {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(getNavPage());
+      return new Response(getNavPage(), {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
     }
 
     // 检查是否以白名单前缀开头
@@ -79,8 +79,9 @@ module.exports = async (req, res) => {
 
     if (!matchedPrefix) {
       // 不是合法代理路径，返回导航页
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(getNavPage());
+      return new Response(getNavPage(), {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
     }
 
     const targetHost = matchedPrefix.slice(1); // 去掉开头的 /
@@ -89,71 +90,49 @@ module.exports = async (req, res) => {
 
     const upstreamUrl = `https://${targetHost}${remainingPath}${url.search}`;
 
-    // 构建请求头（从 req.headers 复制）
-    const headers = {};
-    for (const [key, value] of Object.entries(req.headers)) {
-      const lower = key.toLowerCase();
-      if (['host', 'cf-connecting-ip', 'x-vercel-id', 'connection', 'content-length'].includes(lower)) continue;
-      headers[key] = value;
-    }
-    headers['Host'] = targetHost;
-    headers['Origin'] = `https://${targetHost}`;
-    headers['Referer'] = `https://${targetHost}/`;
-
-    // 发起上游请求
-    const fetchOpts = {
-      method: req.method,
-      headers,
+    // 构建新请求（保留原始方法、头、body，手动处理重定向）
+    const newReq = new Request(upstreamUrl, {
+      method: request.method,
+      headers: request.headers,
+      body: request.method === 'GET' || request.method === 'HEAD' ? null : request.body,
       redirect: 'manual'
-    };
-
-    // 处理请求体（非 GET/HEAD）
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      const body = await new Promise((resolve, reject) => {
-        const chunks = [];
-        req.on('data', chunk => chunks.push(chunk));
-        req.on('end', () => resolve(Buffer.concat(chunks)));
-        req.on('error', reject);
-      });
-      fetchOpts.body = body;
-    }
-
-    const upstreamRes = await fetch(upstreamUrl, fetchOpts);
-    const status = upstreamRes.status;
-
-    // 处理重定向
-    if ([301, 302, 303, 307, 308].includes(status)) {
-      const location = upstreamRes.headers.get('location');
-      if (location) {
-        try {
-          const locUrl = new URL(location);
-          if (locUrl.hostname.includes('github.com') || locUrl.hostname.includes('githubusercontent.com')) {
-            const newLoc = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
-            res.writeHead(status, { 'Location': newLoc });
-            return res.end();
-          }
-        } catch {}
-      }
-      res.writeHead(status, { 'Location': location || '' });
-      return res.end();
-    }
-
-    // 收集响应头
-    const respHeaders = {};
-    upstreamRes.headers.forEach((value, key) => {
-      const lower = key.toLowerCase();
-      if (['content-encoding', 'transfer-encoding', 'content-security-policy',
-           'content-security-policy-report-only', 'clear-site-data'].includes(lower)) return;
-      respHeaders[key] = value;
     });
-    respHeaders['Access-Control-Allow-Origin'] = '*';
-    delete respHeaders['access-control-allow-credentials'];
 
-    const contentType = (respHeaders['Content-Type'] || '').toLowerCase();
+    // 设置关键请求头
+    newReq.headers.set('Host', targetHost);
+    newReq.headers.set('Origin', `https://${targetHost}`);
+    newReq.headers.set('Referer', `https://${targetHost}/`);
+    newReq.headers.delete('cf-connecting-ip');
+    newReq.headers.delete('x-vercel-ip-address');
 
+    const response = await fetch(newReq);
+    let responseHeaders = new Headers(response.headers);
+
+    // 删除危险响应头
+    responseHeaders.delete('content-security-policy');
+    responseHeaders.delete('content-security-policy-report-only');
+    responseHeaders.delete('clear-site-data');
+    responseHeaders.set('access-control-allow-origin', '*');
+    responseHeaders.delete('access-control-allow-credentials');
+
+    // 处理重定向 Location
+    const location = responseHeaders.get('location');
+    if (location) {
+      try {
+        const locUrl = new URL(location);
+        if (locUrl.hostname.includes('github.com') || locUrl.hostname.includes('githubusercontent.com')) {
+          const newLoc = '/' + locUrl.hostname + locUrl.pathname + locUrl.search;
+          responseHeaders.set('location', newLoc);
+        }
+      } catch {}
+    }
+
+    const contentType = responseHeaders.get('content-type') || '';
+
+    // HTML 内容：替换绝对 URL + 注入轻量修复脚本
     if (contentType.includes('text/html')) {
-      let html = await upstreamRes.text();
-      html = replaceText(html);
+      let text = await response.text();
+      text = replaceText(text);
 
       const fixScript = `
         <script>
@@ -184,31 +163,22 @@ module.exports = async (req, res) => {
           })();
         </script>
       `;
-      html = html.replace('</head>', fixScript + '</head>');
+      text = text.replace('</head>', fixScript + '</head>');
 
-      res.writeHead(status, { ...respHeaders, 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(html);
-    }
-
-    // 非 HTML：流式传输
-    res.writeHead(status, respHeaders);
-    if (upstreamRes.body) {
-      const reader = upstreamRes.body.getReader();
-      const pump = () => reader.read().then(({ done, value }) => {
-        if (done) return res.end();
-        res.write(value);
-        pump();
+      return new 应答(text, {
+        status: response.status,
+        headers: { ...responseHeaders, 'Content-Type': 'text/html; charset=utf-8' }
       });
-      pump();
-    } else {
-      res.end();
     }
+
+    // 非 HTML：直接流式返回
+    return new 应答(response.body, {
+      status: response.status,
+      headers: responseHeaders
+    });
 
   } catch (err) {
     console.error('Proxy Error:', err);
-    if (!res.headersSent) {
-      res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Internal Server Error: ' + err.message);
-    }
+    return new 应答('Internal Server Error: ' + err.message, { status: 500 });
   }
-};
+}
