@@ -25,36 +25,28 @@
         <li><a href="download.html" class="active">下载</a></li>
         <li><a href="aria2c.html">aria2c</a></li>
         <li><a href="configuration.html">配置</a></li>
-        <li><a href="add-new-site.html">扩展</a></li>
-        <li><a href="custom-domain.html">域名</a></li>
         <li><a href="security.html">安全</a></li>
-        <li><a href="limits.html">限制</a></li>
         <li><a href="faq.html">FAQ</a></li>
-        <li><a href="troubleshooting.html">排查</a></li>
-        <li><a href="changelog.html">更新</a></li>
-        <li><a href="license.html">许可证</a></li>
+        <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+          <span class="theme-icon">🌙</span>
+        </button>
       </ul>
-      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
-        <span class="theme-icon">🌙</span>
-      </button>
     </div>
   </nav>
 
-  <div class="docs-layout">
-    <aside class="sidebar">
-      <div class="sidebar-title">下载指南</div>
-      <ul class="sidebar-nav">
-        <li><a href="#curl" class="sidebar-link">cURL 下载</a></li>
-        <li><a href="#wget" class="sidebar-link">Wget 下载</a></li>
-        <li><a href="#python" class="sidebar-link">Python 下载</a></li>
-        <li><a href="#powershell" class="sidebar-link">PowerShell 下载</a></li>
-        <li><a href="#browser" class="sidebar-link">浏览器下载</a></li>
-        <li><a href="#batch" class="sidebar-link">批量下载</a></li>
-        <li><a href="#speed" class="sidebar-link">速度对比</a></li>
-      </ul>
+  <div class="docs-grid">
+    <aside class="docs-sidebar">
+      <h4>📥 下载指南</h4>
+      <a href="#curl" class="active">cURL 下载</a>
+      <a href="#wget">Wget 下载</a>
+      <a href="#python">Python 下载</a>
+      <a href="#powershell">PowerShell 下载</a>
+      <a href="#browser">浏览器下载</a>
+      <a href="#batch">批量下载</a>
+      <a href="#speed">速度对比</a>
     </aside>
 
-    <main class="docs-main">
+    <main class="docs-content">
       <h1>下载指南</h1>
       <p class="lead">本文档汇总了各种下载方式，覆盖命令行、脚本和浏览器场景。</p>
 
@@ -181,8 +173,8 @@ done</code>
           <tr><th>场景</th><th>直连 GitHub</th><th>通过 Vercel 代理</th></tr>
         </thead>
         <tbody>
-          <tr><td>Archive 下载（小仓库 < 10MB）</td><td>~200 KB/s</td><td>~2-5 MB/s</td></tr>
-          <tr><td>Archive 下载（大仓库 > 100MB）</td><td>经常超时</td><td>~5-10 MB/s</td></tr>
+          <tr><td>Archive 下载（小仓库 &lt; 10MB）</td><td>~200 KB/s</td><td>~2-5 MB/s</td></tr>
+          <tr><td>Archive 下载（大仓库 &gt; 100MB）</td><td>经常超时</td><td>~5-10 MB/s</td></tr>
           <tr><td>Release 附件（50MB）</td><td>~500 KB/s</td><td>~5-10 MB/s</td></tr>
           <tr><td>Raw 单文件</td><td>~1 MB/s</td><td>~3-8 MB/s</td></tr>
           <tr><td>aria2c 多线程（16 线程）</td><td>~2 MB/s</td><td>~15-30 MB/s</td></tr>

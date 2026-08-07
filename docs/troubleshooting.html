@@ -19,7 +19,7 @@
       </button>
       <ul class="nav-links" id="navLinks">
         <li><a href="../index.html">首页</a></li>
-        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="quick-start.html">快速开�?/a></li>
         <li><a href="deployment.html">部署</a></li>
         <li><a href="usage.html">使用方式</a></li>
         <li><a href="download.html">下载</a></li>
@@ -32,7 +32,7 @@
         <li><a href="faq.html">FAQ</a></li>
         <li><a href="troubleshooting.html" class="active">排查</a></li>
         <li><a href="changelog.html">更新</a></li>
-        <li><a href="license.html">许可证</a></li>
+        <li><a href="license.html">许可�?/a></li>
       </ul>
       <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
         <span class="theme-icon">🌙</span>
@@ -40,25 +40,24 @@
     </div>
   </nav>
 
-  <div class="docs-layout">
-    <aside class="sidebar">
-      <div class="sidebar-title">排查指南</div>
-      <ul class="sidebar-nav">
-        <li><a href="#diagnose" class="sidebar-link">诊断脚本</a></li>
-        <li><a href="#500" class="sidebar-link">500 错误处理</a></li>
-        <li><a href="#404" class="sidebar-link">404 错误处理</a></li>
-        <li><a href="#timeout" class="sidebar-link">超时处理</a></li>
-        <li><a href="#download-fail" class="sidebar-link">下载失败</a></li>
-        <li><a href="#slow" class="sidebar-link">速度慢</a></li>
-        <li><a href="#log-check" class="sidebar-link">日志检查</a></li>
-        <li><a href="#reset" class="sidebar-link">重置部署</a></li>
-        <li><a href="#last-resort" class="sidebar-link">终极手段</a></li>
+  <div class="docs-grid">
+    <aside class="docs-sidebar">
+      <h4>排查指南</h4>
+        <li><a href="#diagnose" class="">诊断脚本</a></li>
+        <li><a href="#500" class="">500 错误处理</a></li>
+        <li><a href="#404" class="">404 错误处理</a></li>
+        <li><a href="#timeout" class="">超时处理</a></li>
+        <li><a href="#download-fail" class="">下载失败</a></li>
+        <li><a href="#slow" class="">速度�?/a></li>
+        <li><a href="#log-check" class="">日志检�?/a></li>
+        <li><a href="#reset" class="">重置部署</a></li>
+        <li><a href="#last-resort" class="">终极手段</a></li>
       </ul>
     </aside>
 
-    <main class="docs-main">
+    <main class="docs-content">
       <h1>排查指南</h1>
-      <p class="lead">系统化排查问题，从日志到代码逐层定位。</p>
+      <p class="lead">系统化排查问题，从日志到代码逐层定位�?/p>
 
       <h2 id="diagnose">诊断脚本</h2>
       <p>运行以下脚本，一键诊断所有常见问题：</p>
@@ -75,12 +74,11 @@ echo "域名: $DOMAIN"
 echo "时间: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 
-# 1. 基本连通性
-echo "1️⃣ 基本连通性"
+# 1. 基本连通�?echo "1️⃣ 基本连通�?
 CODE=$(curl -s -o /dev/null -w "%{http_code}" "$DOMAIN/" --max-time 10)
-echo "   根路径: HTTP $CODE (期望: 200)"
+echo "   根路�? HTTP $CODE (期望: 200)"
 if [ "$CODE" != "200" ]; then
-  echo "   ❌ 根路径异常！检查 Vercel 部署状态。"
+  echo "   �?根路径异常！检�?Vercel 部署状态�?
 fi
 
 # 2. 代理功能
@@ -89,7 +87,7 @@ echo "2️⃣ 代理功能测试"
 CODE=$(curl -s -o /dev/null -w "%{http_code}" "$DOMAIN/github.com/vercel/next.js" --max-time 15)
 echo "   GitHub 代理: HTTP $CODE (期望: 200/301/302)"
 if [ "$CODE" = "000" ]; then
-  echo "   ❌ 连接失败！可能是超时或 DNS 问题。"
+  echo "   �?连接失败！可能是超时�?DNS 问题�?
 fi
 
 # 3. API 代理
@@ -98,7 +96,7 @@ echo "3️⃣ API 代理测试"
 CODE=$(curl -s -o /dev/null -w "%{http_code}" "$DOMAIN/api.github.com/repos/vercel/next.js" --max-time 15)
 echo "   API 代理: HTTP $CODE (期望: 200)"
 if [ "$CODE" = "403" ]; then
-  echo "   ⚠️ 可能被 GitHub 限速，配置 GITHUB_TOKEN 解决。"
+  echo "   ⚠️ 可能�?GitHub 限速，配置 GITHUB_TOKEN 解决�?
 fi
 
 # 4. 下载测试
@@ -123,7 +121,7 @@ fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ 诊断完成。如有异常，请查阅下方对应章节。"</code>
+echo "�?诊断完成。如有异常，请查阅下方对应章节�?</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
@@ -131,35 +129,34 @@ echo "✅ 诊断完成。如有异常，请查阅下方对应章节。"</code>
       <div class="code-block">
         <code># 保存脚本
 cat > diagnose.sh << 'EOF'
-# (粘贴上面的脚本内容)
+# (粘贴上面的脚本内�?
 EOF
 
 # 赋予执行权限
 chmod +x diagnose.sh
 
-# 运行（替换为你的域名）
-./diagnose.sh https://your-domain.vercel.app</code>
+# 运行（替换为你的域名�?./diagnose.sh https://your-domain.vercel.app</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
       <h2 id="500">500 错误处理</h2>
-      <p><code>FUNCTION_INVOCATION_FAILED</code> 是最常见的 500 错误。</p>
+      <p><code>FUNCTION_INVOCATION_FAILED</code> 是最常见�?500 错误�?/p>
 
       <h3>排查步骤</h3>
       <ol>
-        <li><strong>查看日志：</strong>Vercel Dashboard → Functions → 选择部署 → 查看日志</li>
-        <li><strong>本地复现：</strong>使用 <code>vercel dev</code> 在本地运行，看详细错误</li>
-        <li><strong>检查语法：</strong>运行 <code>node --check api/proxy.js</code> 检查语法</li>
+        <li><strong>查看日志�?/strong>Vercel Dashboard �?Functions �?选择部署 �?查看日志</li>
+        <li><strong>本地复现�?/strong>使用 <code>vercel dev</code> 在本地运行，看详细错�?/li>
+        <li><strong>检查语法：</strong>运行 <code>node --check api/proxy.js</code> 检查语�?/li>
       </ol>
 
-      <h3>常见原因和修复</h3>
+      <h3>常见原因和修�?/h3>
       <table class="doc-table">
         <thead><tr><th>错误信息</th><th>原因</th><th>修复</th></tr></thead>
         <tbody>
           <tr><td><code>Invalid URL</code></td><td><code>new URL()</code> 缺少 base</td><td>使用 <code>new URL(req.url, 'http://' + host)</code></td></tr>
-          <tr><td><code>.get is not a function</code></td><td>把 req 当成了 Request 对象</td><td>使用 <code>req.headers['host']</code> 而非 <code>req.headers.get()</code></td></tr>
-          <tr><td><code>.length is not a function</code></td><td>把字符串当成了数组</td><td>用 <code>str.length</code>（属性）而非 <code>str.length()</code>（函数）</td></tr>
-          <tr><td><code>Unexpected token</code></td><td>JSON 文件有语法错误</td><td>运行 <code>json_pp &lt; vercel.json</code> 检查</td></tr>
+          <tr><td><code>.get is not a function</code></td><td>�?req 当成�?Request 对象</td><td>使用 <code>req.headers['host']</code> 而非 <code>req.headers.get()</code></td></tr>
+          <tr><td><code>.length is not a function</code></td><td>把字符串当成了数�?/td><td>�?<code>str.length</code>（属性）而非 <code>str.length()</code>（函数）</td></tr>
+          <tr><td><code>Unexpected token</code></td><td>JSON 文件有语法错�?/td><td>运行 <code>json_pp &lt; vercel.json</code> 检�?/td></tr>
           <tr><td><code>MODULE_NOT_FOUND</code></td><td>缺少依赖</td><td>本项目零依赖，检查是否有 <code>require()</code> 调用</td></tr>
         </tbody>
       </table>
@@ -168,9 +165,9 @@ chmod +x diagnose.sh
       <table class="doc-table">
         <thead><tr><th>场景</th><th>原因</th><th>修复</th></tr></thead>
         <tbody>
-          <tr><td>所有路径都 404</td><td><code>vercel.json</code> 重写规则未生效</td><td>检查 <code>vercel.json</code> 格式是否正确</td></tr>
-          <tr><td>部分路径 404</td><td>路径不在白名单中</td><td>检查 URL 是否以 <code>/github.com</code> 等前缀开头</td></tr>
-          <tr><td>只有根路径 200</td><td>正常行为</td><td>根路径返回导航页，其他路径需带白名单前缀</td></tr>
+          <tr><td>所有路径都 404</td><td><code>vercel.json</code> 重写规则未生�?/td><td>检�?<code>vercel.json</code> 格式是否正确</td></tr>
+          <tr><td>部分路径 404</td><td>路径不在白名单中</td><td>检�?URL 是否�?<code>/github.com</code> 等前缀开�?/td></tr>
+          <tr><td>只有根路�?200</td><td>正常行为</td><td>根路径返回导航页，其他路径需带白名单前缀</td></tr>
         </tbody>
       </table>
 
@@ -192,13 +189,13 @@ cat vercel.json | json_pp
       <table class="doc-table">
         <thead><tr><th>超时类型</th><th>默认限制</th><th>解决方案</th></tr></thead>
         <tbody>
-          <tr><td>函数执行超时</td><td>10 秒（Hobby）</td><td>升级 Pro（300 秒）或用 aria2c 分片</td></tr>
-          <tr><td>上游连接超时</td><td>无明确限制</td><td>GitHub 限速，重试或换时段</td></tr>
-          <tr><td>浏览器等待超时</td><td>~30 秒</td><td>页面太大，等待或刷新</td></tr>
+          <tr><td>函数执行超时</td><td>10 秒（Hobby�?/td><td>升级 Pro�?00 秒）或用 aria2c 分片</td></tr>
+          <tr><td>上游连接超时</td><td>无明确限�?/td><td>GitHub 限速，重试或换时段</td></tr>
+          <tr><td>浏览器等待超�?/td><td>~30 �?/td><td>页面太大，等待或刷新</td></tr>
         </tbody>
       </table>
 
-      <h3>客户端超时设置</h3>
+      <h3>客户端超时设�?/h3>
       <div class="code-block">
         <code># cURL 设置超时
 curl --connect-timeout 30 --max-time 300 "URL"
@@ -215,17 +212,17 @@ wget --timeout=300 "URL"</code>
       <table class="doc-table">
         <thead><tr><th>症状</th><th>原因</th><th>解决方案</th></tr></thead>
         <tbody>
-          <tr><td>下载中断</td><td>Vercel 10 秒超时</td><td>用 aria2c 多线程分片下载</td></tr>
-          <tr><td>文件损坏</td><td>传输中断</td><td>用 <code>aria2c -c</code> 断点续传</td></tr>
-          <tr><td>下载极慢</td><td>路由不佳或限速</td><td>换时段或升级 Pro</td></tr>
-          <tr><td>大文件失败</td><td>超过 4.5MB 请求体限制</td><td>仅影响上传，下载不受影响</td></tr>
+          <tr><td>下载中断</td><td>Vercel 10 秒超�?/td><td>�?aria2c 多线程分片下�?/td></tr>
+          <tr><td>文件损坏</td><td>传输中断</td><td>�?<code>aria2c -c</code> 断点续传</td></tr>
+          <tr><td>下载极慢</td><td>路由不佳或限�?/td><td>换时段或升级 Pro</td></tr>
+          <tr><td>大文件失�?/td><td>超过 4.5MB 请求体限�?/td><td>仅影响上传，下载不受影响</td></tr>
         </tbody>
       </table>
 
-      <h2 id="slow">速度慢</h2>
+      <h2 id="slow">速度�?/h2>
       <h3>排查步骤</h3>
       <div class="code-block">
-        <code># 1. 测试到 Vercel 的速度
+        <code># 1. 测试�?Vercel 的速度
 ping your-domain.vercel.app
 
 # 2. 测试下载速度
@@ -234,26 +231,25 @@ curl -o /dev/null -w "%{speed_download} bytes/s\n" "URL"
 # 3. 对比直连 GitHub 的速度
 curl -o /dev/null -w "%{speed_download} bytes/s\n" "https://github.com/owner/repo/archive/main.zip"
 
-# 4. 测试不同地区节点（使用 Cloudflare Speed Test）
-curl "https://speed.cloudflare.com/__down?bytes=100000000" -o /dev/null -w "%{speed_download}\n"</code>
+# 4. 测试不同地区节点（使�?Cloudflare Speed Test�?curl "https://speed.cloudflare.com/__down?bytes=100000000" -o /dev/null -w "%{speed_download}\n"</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <h3>提速方案</h3>
+      <h3>提速方�?/h3>
       <ul>
-        <li>✅ 使用 aria2c 16 线程（立竿见影）</li>
-        <li>✅ 升级 Vercel Pro（300 秒超时）</li>
-        <li>✅ 选择离你近的 Vercel 区域（Settings → Regions）</li>
-        <li>✅ 避开高峰时段（国内晚上 8-11 点通常较慢）</li>
+        <li>�?使用 aria2c 16 线程（立竿见影）</li>
+        <li>�?升级 Vercel Pro�?00 秒超时）</li>
+        <li>�?选择离你近的 Vercel 区域（Settings �?Regions�?/li>
+        <li>�?避开高峰时段（国内晚�?8-11 点通常较慢�?/li>
       </ul>
 
-      <h2 id="log-check">日志检查</h2>
+      <h2 id="log-check">日志检�?/h2>
 
       <h3>Vercel Dashboard 查看</h3>
       <ol>
         <li>打开 <a href="https://vercel.com/dashboard" target="_blank">vercel.com/dashboard</a></li>
-        <li>选择你的项目 → <strong>Functions</strong> 标签</li>
-        <li>选择最新部署 → 查看 <strong>Runtime Logs</strong></li>
+        <li>选择你的项目 �?<strong>Functions</strong> 标签</li>
+        <li>选择最新部�?�?查看 <strong>Runtime Logs</strong></li>
       </ol>
 
       <h3>Vercel CLI 查看</h3>
@@ -261,8 +257,7 @@ curl "https://speed.cloudflare.com/__down?bytes=100000000" -o /dev/null -w "%{sp
         <code># 实时日志
 vercel logs --follow
 
-# 最近 50 行
-vercel logs --limit 50
+# 最�?50 �?vercel logs --limit 50
 
 # 过滤错误
 vercel logs | grep -i "error\|fail\|500"
@@ -277,10 +272,10 @@ vercel logs | grep "github.com/vercel"</code>
         <thead><tr><th>日志内容</th><th>含义</th></tr></thead>
         <tbody>
           <tr><td><code>FUNCTION_INVOCATION_FAILED</code></td><td>函数执行失败（代码错误）</td></tr>
-          <tr><td><code>FUNCTION_PAYLOAD_TOO_LARGE</code></td><td>请求体超过 4.5MB</td></tr>
-          <tr><td><code>FUNCTION_TIMEOUT</code></td><td>执行超过 10 秒</td></tr>
+          <tr><td><code>FUNCTION_PAYLOAD_TOO_LARGE</code></td><td>请求体超�?4.5MB</td></tr>
+          <tr><td><code>FUNCTION_TIMEOUT</code></td><td>执行超过 10 �?/td></tr>
           <tr><td><code>Proxy Error: TypeError</code></td><td>代码中有类型错误</td></tr>
-          <tr><td><code>Bad Gateway</code></td><td>上游 GitHub 无响应</td></tr>
+          <tr><td><code>Bad Gateway</code></td><td>上游 GitHub 无响�?/td></tr>
         </tbody>
       </table>
 
@@ -291,10 +286,9 @@ vercel logs | grep "github.com/vercel"</code>
 vercel remove your-project-name
 
 # 2. 删除 GitHub 仓库（在 GitHub Web 上操作）
-# Settings → Danger Zone → Delete repository
+# Settings �?Danger Zone �?Delete repository
 
-# 3. 创建全新仓库并推送
-mkdir github-proxy-new
+# 3. 创建全新仓库并推�?mkdir github-proxy-new
 cd github-proxy-new
 # 放入 api/proxy.js, vercel.json, package.json
 git init && git add . && git commit -m "init"
@@ -306,19 +300,19 @@ git push -u origin main
       </div>
 
       <h2 id="last-resort">终极手段</h2>
-      <p>如果以上都无效，考虑替代方案：</p>
+      <p>如果以上都无效，考虑替代方案�?/p>
 
       <h3>方案 A：Cloudflare Workers</h3>
-      <p>边缘计算平台，天然适合做反代，不需要 JS 劫持。</p>
+      <p>边缘计算平台，天然适合做反代，不需�?JS 劫持�?/p>
       <ul>
-        <li>免费额度：10 万次请求/天，无限带宽</li>
+        <li>免费额度�?0 万次请求/天，无限带宽</li>
         <li>支持 WebSocket</li>
-        <li>可以完美反代 SPA（在边缘层改写，不需要浏览器端 JS）</li>
-        <li>部署简单：<code>wrangler publish</code> 一行命令</li>
+        <li>可以完美反代 SPA（在边缘层改写，不需要浏览器�?JS�?/li>
+        <li>部署简单：<code>wrangler publish</code> 一行命�?/li>
       </ul>
 
       <h3>方案 B：自建服务器</h3>
-      <p>用 Nginx 反向代理，完全可控：</p>
+      <p>�?Nginx 反向代理，完全可控：</p>
       <div class="code-block">
         <code># Nginx 反代配置示例
 server {
@@ -330,22 +324,20 @@ server {
         proxy_set_header Host github.com;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Authorization "";  # 不传递认证
-    }
+        proxy_set_header Authorization "";  # 不传递认�?    }
 }</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <h3>方案 C：使用现成工具</h3>
+      <h3>方案 C：使用现成工�?/h3>
       <ul>
-        <li><a href="https://ghproxy.cc/" target="_blank">ghproxy.cc</a> — 国内可用的 GitHub 代理</li>
-        <li><a href="https://ghproxy.cn/" target="_blank">ghproxy.cn</a> — 另一个选择</li>
-        <li><code>git config --global url."https://ghproxy.cc/".insteadOf "https://github.com/"</code> — Git 全局替换</li>
+        <li><a href="https://ghproxy.cc/" target="_blank">ghproxy.cc</a> �?国内可用�?GitHub 代理</li>
+        <li><a href="https://ghproxy.cn/" target="_blank">ghproxy.cn</a> �?另一个选择</li>
+        <li><code>git config --global url."https://ghproxy.cc/".insteadOf "https://github.com/"</code> �?Git 全局替换</li>
       </ul>
 
       <div class="tip-box">
-        <strong>💡 最后建议：</strong>如果下载是核心需求，Vercel 代理 + aria2c 多线程是最佳组合。如果网页浏览是核心需求，直接迁移到 Cloudflare Workers。
-      </div>
+        <strong>💡 最后建议：</strong>如果下载是核心需求，Vercel 代理 + aria2c 多线程是最佳组合。如果网页浏览是核心需求，直接迁移�?Cloudflare Workers�?      </div>
     </main>
   </div>
 

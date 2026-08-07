@@ -23,41 +23,32 @@
         <li><a href="deployment.html">部署</a></li>
         <li><a href="usage.html">使用方式</a></li>
         <li><a href="download.html">下载</a></li>
-        <li><a href="aria2c.html">aria2c</a></li>
         <li><a href="configuration.html">配置</a></li>
-        <li><a href="add-new-site.html">扩展</a></li>
-        <li><a href="custom-domain.html">域名</a></li>
         <li><a href="security.html">安全</a></li>
-        <li><a href="limits.html">限制</a></li>
         <li><a href="faq.html">FAQ</a></li>
-        <li><a href="troubleshooting.html">排查</a></li>
-        <li><a href="changelog.html">更新</a></li>
         <li><a href="license.html" class="active">许可证</a></li>
+        <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+          <span class="theme-icon">🌙</span>
+        </button>
       </ul>
-      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
-        <span class="theme-icon">🌙</span>
-      </button>
     </div>
   </nav>
 
-  <div class="docs-layout">
-    <aside class="sidebar">
-      <div class="sidebar-title">许可证</div>
-      <ul class="sidebar-nav">
-        <li><a href="#mit" class="sidebar-link">MIT License</a></li>
-        <li><a href="#permissions" class="sidebar-link">你可以做什么</a></li>
-        <li><a href="#conditions" class="sidebar-link">你需要遵守什么</a></li>
-        <li><a href="#limitations" class="sidebar-link">没有保障</a></li>
-        <li><a href="#apply" class="sidebar-link">如何应用到你的项目</a></li>
-        <li><a href="#commercial" class="sidebar-link">商用说明</a></li>
-      </ul>
+  <div class="docs-grid">
+    <aside class="docs-sidebar">
+      <h4>📜 许可证</h4>
+      <a href="#mit" class="active">MIT License</a>
+      <a href="#permissions">你可以做什么</a>
+      <a href="#conditions">你需要遵守什么</a>
+      <a href="#limitations">没有保障</a>
+      <a href="#apply">如何应用到你的项目</a>
     </aside>
 
-    <main class="docs-main">
-      <h1>许可证</h1>
-      <p class="lead">本项目基于 <strong>MIT License</strong> 开源，允许你自由使用、修改和分发。</p>
+    <main class="docs-content">
+      <h1>MIT License</h1>
+      <p class="lead">本项目基于 MIT License 开源，允许你自由使用、修改和分发。</p>
 
-      <h2 id="mit">MIT License</h2>
+      <h2 id="mit">MIT License 全文</h2>
       <div class="code-block">
         <code>MIT License
 
@@ -83,92 +74,69 @@ SOFTWARE.</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <h2 id="permissions">✅ 你可以做什么</h2>
-      <table class="doc-table">
-        <thead><tr><th>权限</th><th>说明</th></tr></thead>
-        <tbody>
-          <tr><td>✅ 商用</td><td>可以把它用在商业产品中</td></tr>
-          <tr><td>✅ 修改</td><td>可以修改代码适配自己的需求</td></tr>
-          <tr><td>✅ 分发</td><td>可以分发给他人</td></tr>
-          <tr><td>✅ 私有使用</td><td>可以闭源使用</td></tr>
-          <tr><td>✅ 附加条款</td><td>可以在 MIT 基础上加自己的条款</td></tr>
-          <tr><td>✅ 专利使用</td><td>隐含授权使用相关专利</td></tr>
-          <tr><td>✅ Sublicense</td><td>可以再授权给他人</td></tr>
-        </tbody>
-      </table>
-
-      <h2 id="conditions">📋 你需要遵守什么</h2>
-      <p>MIT 许可证只有<strong>一个条件</strong>：</p>
-      <div class="warn-box">
-        <strong>⚠️ 唯一条件：</strong>在分发代码时，必须包含原始的 <code>LICENSE</code> 文件和版权声明。就这么简单。
-      </div>
-
-      <h3>源代码文件头注释（推荐但不强制）</h3>
-      <p>在每个源代码文件头部加上版权声明是好习惯：</p>
-      <div class="code-block">
-        <code>// Copyright (c) 2026 tanle-mtr
-// Licensed under the MIT License - see LICENSE file</code>
-        <button class="copy-btn" onclick="copyCode(this)">复制</button>
-      </div>
-
-      <h2 id="limitations">❌ 没有保障</h2>
-      <p>MIT 许可证明确声明：</p>
+      <h2 id="permissions">你可以做什么</h2>
       <ul>
-        <li>不保证代码能用（"AS IS"）</li>
-        <li>不保证适合任何特定用途</li>
-        <li>作者不承担任何损害赔偿责任</li>
-        <li>不保证没有 bug</li>
+        <li>✅ 免费使用：任何人都可以免费使用本软件</li>
+        <li>✅ 商业用途：可以将本软件用于商业项目</li>
+        <li>✅ 修改代码：可以修改源代码，制作衍生作品</li>
+        <li>✅ 分发复制：可以分发软件的副本</li>
+        <li>✅ 私有使用：可以在私有项目中不使用开源许可证</li>
       </ul>
-      <p>换句话说：<strong>免费的东西，自己负责测试。</strong></p>
+
+      <h2 id="conditions">你需要遵守什么</h2>
+      <ul>
+        <li>📋 保留版权声明：在副本中包含原始版权通知</li>
+        <li>📋 包含许可证：在副本中包含 MIT 许可证文本</li>
+      </ul>
+      <div class="tip-box">
+        <strong>💡 提示：</strong>只需要在软件的副本中包含版权声明和许可证文本即可，无需支付任何费用。
+      </div>
+
+      <h2 id="limitations">没有保障</h2>
+      <p>MIT License 明确声明：<strong>软件按"原样"提供，不提供任何明示或暗示的担保</strong>，包括但不限于：</p>
+      <ul>
+        <li>商用适销性担保</li>
+        <li>特定用途适用性担保</li>
+        <li>不侵权担保</li>
+      </ul>
+      <p>作者不承担任何因使用本软件而产生的直接、间接、附带、特殊、惩戒性或后果性损害赔偿责任。</p>
 
       <h2 id="apply">如何应用到你的项目</h2>
-      <h3>步骤一：创建 LICENSE 文件</h3>
-      <p>在你的项目根目录创建名为 <code>LICENSE</code>（全大写）的文件，内容就是上方的 MIT License 文本。</p>
+      <p>如果你想在自己的项目中使用 MIT 许可证：</p>
+      <ol>
+        <li>创建一个名为 <code>LICENSE</code> 或 <code>LICENSE.md</code> 的文件</li>
+        <li>复制上面的 MIT License 全文</li>
+        <li>将 <code>Copyright (c) 2026 tanle-mtr</code> 替换为你的版权信息</li>
+        <li>提交到你的项目仓库根目录</li>
+      </ol>
 
-      <h3>步骤二：修改版权信息</h3>
-      <p>把 <code>Copyright (c) 2026 tanle-mtr</code> 改成你的名字：</p>
       <div class="code-block">
-        <code>Copyright (c) 2026 你的名字或组织名</code>
+        <code># 示例：创建 LICENSE 文件
+# 将以下文本保存为 LICENSE 文件
+
+MIT License
+
+Copyright (c) 2026 Your Name
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction...</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <h3>步骤三：在 README 中声明</h3>
-      <div class="code-block">
-        <code>## License
-
-Licensed under the [MIT License](./LICENSE).</code>
-        <button class="copy-btn" onclick="copyCode(this)">复制</button>
-      </div>
-
-      <h3>步骤四：GitHub 自动识别</h3>
-      <p>只要仓库根目录有 <code>LICENSE</code> 文件，GitHub 会自动在仓库主页右侧显示 "MIT License" 徽章。</p>
-
-      <h2 id="commercial">商用说明</h2>
+      <h2>与其他许可证对比</h2>
       <table class="doc-table">
-        <thead><tr><th>场景</th><th>是否允许</th><th>注意事项</th></tr></thead>
+        <thead><tr><th>许可证</th><th>商用</th><th>修改</th><th>开源要求</th><th>专利授权</th></tr></thead>
         <tbody>
-          <tr><td>用在公司内部工具</td><td>✅ 允许</td><td>无需开源你的内部代码</td></tr>
-          <tr><td>集成到商业 SaaS 产品</td><td>✅ 允许</td><td>保留 LICENSE 文件即可</td></tr>
-          <tr><td>修改后闭源发布</td><td>✅ 允许</td><td>保留原始版权声明</td></tr>
-          <tr><td>出售本代码本身</td><td>✅ 允许</td><td>需附带 MIT License</td></tr>
-          <tr><td>申请专利保护</td><td>✅ 允许</td><td>MIT 不限制专利</td></tr>
-          <tr><td>用在 GPL 项目中</td><td>✅ 允许</td><td>MIT 代码可以并入 GPL 项目</td></tr>
-        </tbody>
-      </table>
-
-      <h3>与 GPL 的区别</h3>
-      <table class="doc-table">
-        <thead><tr><th>对比项</th><th>MIT</th><th>GPL</th></tr></thead>
-        <tbody>
-          <tr><td>修改后是否必须开源</td><td>❌ 不需要</td><td>✅ 必须</td></tr>
-          <tr><td>可以闭源商用</td><td>✅ 可以</td><td>❌ 不可以</td></tr>
-          <tr><td>条件数量</td><td>1 个（保留声明）</td><td>多个（传染条款）</td></tr>
-          <tr><td>适合场景</td><td>库、工具、商用</td><td>强调自由共享</td></tr>
+          <tr><td><strong>MIT</strong></td><td>✅</td><td>✅</td><td>保留声明</td><td>❌</td></tr>
+          <tr><td>Apache 2.0</td><td>✅</td><td>✅</td><td>保留声明</td><td>✅</td></tr>
+          <tr><td>GPLv3</td><td>✅</td><td>✅</td><td>衍生作品必须开源</td><td>✅</td></tr>
+          <tr><td>BSD</td><td>✅</td><td>✅</td><td>保留声明</td><td>❌</td></tr>
         </tbody>
       </table>
 
       <div class="tip-box">
-        <strong>💡 总结：</strong>MIT 是最宽松的开源许可证之一。你几乎可以用它做任何事，唯一的义务是保留版权声明。如果你不需要 GPL 的"传染性"，MIT 是最佳选择。
+        <strong>💡 总结：</strong>MIT License 是最宽松的开源许可证之一，几乎没有任何限制。你可以自由使用、修改和分发本软件，只需保留版权声明即可。
       </div>
     </main>
   </div>

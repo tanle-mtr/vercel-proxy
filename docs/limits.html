@@ -19,7 +19,7 @@
       </button>
       <ul class="nav-links" id="navLinks">
         <li><a href="../index.html">首页</a></li>
-        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="quick-start.html">快速开�?/a></li>
         <li><a href="deployment.html">部署</a></li>
         <li><a href="usage.html">使用方式</a></li>
         <li><a href="download.html">下载</a></li>
@@ -32,7 +32,7 @@
         <li><a href="faq.html">FAQ</a></li>
         <li><a href="troubleshooting.html">排查</a></li>
         <li><a href="changelog.html">更新</a></li>
-        <li><a href="license.html">许可证</a></li>
+        <li><a href="license.html">许可�?/a></li>
       </ul>
       <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
         <span class="theme-icon">🌙</span>
@@ -40,117 +40,113 @@
     </div>
   </nav>
 
-  <div class="docs-layout">
-    <aside class="sidebar">
-      <div class="sidebar-title">使用限制</div>
-      <ul class="sidebar-nav">
-        <li><a href="#vercel-hobby" class="sidebar-link">Vercel Hobby 限制</a></li>
-        <li><a href="#vercel-pro" class="sidebar-link">Vercel Pro 限制</a></li>
-        <li><a href="#github-rate" class="sidebar-link">GitHub 速率限制</a></li>
-        <li><a href="#request-size" class="sidebar-link">请求体大小</a></li>
-        <li><a href="#timeout" class="sidebar-link">超时限制</a></li>
-        <li><a href="#concurrent" class="sidebar-link">并发限制</a></li>
-        <li><a href="#mitigation" class="sidebar-link">优化建议</a></li>
+  <div class="docs-grid">
+    <aside class="docs-sidebar">
+      <h4>使用限制</h4>
+        <li><a href="#vercel-hobby" class="">Vercel Hobby 限制</a></li>
+        <li><a href="#vercel-pro" class="">Vercel Pro 限制</a></li>
+        <li><a href="#github-rate" class="">GitHub 速率限制</a></li>
+        <li><a href="#request-size" class="">请求体大�?/a></li>
+        <li><a href="#timeout" class="">超时限制</a></li>
+        <li><a href="#concurrent" class="">并发限制</a></li>
+        <li><a href="#mitigation" class="">优化建议</a></li>
       </ul>
     </aside>
 
-    <main class="docs-main">
+    <main class="docs-content">
       <h1>使用限制</h1>
-      <p class="lead">了解 Vercel 和 GitHub 的限制，合理规划使用方式。</p>
+      <p class="lead">了解 Vercel �?GitHub 的限制，合理规划使用方式�?/p>
 
       <h2 id="vercel-hobby">Vercel Hobby 限制</h2>
       <table class="doc-table">
         <thead><tr><th>项目</th><th>限额</th><th>超限后果</th></tr></thead>
         <tbody>
-          <tr><td>函数调用次数</td><td>100 万次/月</td><td>返回 429</td></tr>
-          <tr><td>带宽</td><td>100 GB/月</td><td>返回 429</td></tr>
-          <tr><td>函数超时</td><td>10 秒（Hobby）/ 300 秒（Pro）</td><td>返回 502</td></tr>
-          <tr><td>函数内存</td><td>1024 MB</td><td>函数被终止</td></tr>
-          <tr><td>请求体大小</td><td>4.5 MB</td><td>返回 413</td></tr>
-          <tr><td>同时运行实例</td><td>无明确限制</td><td>—</td></tr>
-          <tr><td>免费项目数</td><td>无限</td><td>—</td></tr>
+          <tr><td>函数调用次数</td><td>100 万次/�?/td><td>返回 429</td></tr>
+          <tr><td>带宽</td><td>100 GB/�?/td><td>返回 429</td></tr>
+          <tr><td>函数超时</td><td>10 秒（Hobby�? 300 秒（Pro�?/td><td>返回 502</td></tr>
+          <tr><td>函数内存</td><td>1024 MB</td><td>函数被终�?/td></tr>
+          <tr><td>请求体大�?/td><td>4.5 MB</td><td>返回 413</td></tr>
+          <tr><td>同时运行实例</td><td>无明确限�?/td><td>�?/td></tr>
+          <tr><td>免费项目�?/td><td>无限</td><td>�?/td></tr>
         </tbody>
       </table>
 
       <h2 id="vercel-pro">Vercel Pro 限制</h2>
       <table class="doc-table">
-        <thead><tr><th>项目</th><th>Hobby</th><th>Pro ($20/月)</th></tr></thead>
+        <thead><tr><th>项目</th><th>Hobby</th><th>Pro ($20/�?</th></tr></thead>
         <tbody>
-          <tr><td>函数调用</td><td>100 万次/月</td><td>按需付费（超量 $0.4/百万次）</td></tr>
-          <tr><td>带宽</td><td>100 GB/月</td><td>1 TB/月（超量 $40/TB）</td></tr>
-          <tr><td>函数超时</td><td>10 秒</td><td>300 秒</td></tr>
+          <tr><td>函数调用</td><td>100 万次/�?/td><td>按需付费（超�?$0.4/百万次）</td></tr>
+          <tr><td>带宽</td><td>100 GB/�?/td><td>1 TB/月（超量 $40/TB�?/td></tr>
+          <tr><td>函数超时</td><td>10 �?/td><td>300 �?/td></tr>
           <tr><td>函数内存</td><td>1024 MB</td><td>3008 MB</td></tr>
-          <tr><td>请求体</td><td>4.5 MB</td><td>4.5 MB</td></tr>
-          <tr><td>团队人数</td><td>1 人</td><td>无限</td></tr>
-          <tr><td>分析日志保留</td><td>7 天</td><td>30 天</td></tr>
+          <tr><td>请求�?/td><td>4.5 MB</td><td>4.5 MB</td></tr>
+          <tr><td>团队人数</td><td>1 �?/td><td>无限</td></tr>
+          <tr><td>分析日志保留</td><td>7 �?/td><td>30 �?/td></tr>
         </tbody>
       </table>
 
       <h2 id="github-rate">GitHub 速率限制</h2>
       <table class="doc-table">
-        <thead><tr><th>认证方式</th><th>每小时限额</th><th>说明</th></tr></thead>
+        <thead><tr><th>认证方式</th><th>每小时限�?/th><th>说明</th></tr></thead>
         <tbody>
-          <tr><td>未认证</td><td>60 次/小时</td><td>按 IP 计算</td></tr>
-          <tr><td>Basic Auth</td><td>5000 次/小时</td><td>需要 GitHub 账号</td></tr>
-          <tr><td>Personal Access Token</td><td>5000 次/小时</td><td>推荐方式</td></tr>
-          <tr><td>GitHub App</td><td>15000 次/小时</td><td>需要注册 App</td></tr>
+          <tr><td>未认�?/td><td>60 �?小时</td><td>�?IP 计算</td></tr>
+          <tr><td>Basic Auth</td><td>5000 �?小时</td><td>需�?GitHub 账号</td></tr>
+          <tr><td>Personal Access Token</td><td>5000 �?小时</td><td>推荐方式</td></tr>
+          <tr><td>GitHub App</td><td>15000 �?小时</td><td>需要注�?App</td></tr>
           <tr><td>GraphQL API</td><td>5000 积分/小时</td><td>按复杂度计算</td></tr>
         </tbody>
       </table>
 
       <h3>查看当前速率限制</h3>
       <div class="code-block">
-        <code># 未认证
-curl -I "https://your-domain.vercel.app/api.github.com/users/octocat"
+        <code># 未认�?curl -I "https://your-domain.vercel.app/api.github.com/users/octocat"
 
-# 带 Token
+# �?Token
 curl -H "Authorization: Bearer YOUR_TOKEN" \
   "https://your-domain.vercel.app/api.github.com/users/octocat"
 
-# 查看速率限制状态
-curl "https://your-domain.vercel.app/api.github.com/rate_limit"</code>
+# 查看速率限制状�?curl "https://your-domain.vercel.app/api.github.com/rate_limit"</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <p>响应头中关注：</p>
+      <p>响应头中关注�?/p>
       <ul>
-        <li><code>X-RateLimit-Limit</code> — 当前限额</li>
-        <li><code>X-RateLimit-Remaining</code> — 剩余次数</li>
-        <li><code>X-RateLimit-Reset</code> — 重置时间（Unix 时间戳）</li>
+        <li><code>X-RateLimit-Limit</code> �?当前限额</li>
+        <li><code>X-RateLimit-Remaining</code> �?剩余次数</li>
+        <li><code>X-RateLimit-Reset</code> �?重置时间（Unix 时间戳）</li>
       </ul>
 
-      <h2 id="request-size">请求体大小</h2>
-      <p>Vercel Functions 对请求体有 4.5MB 的限制。如果你需要代理 Git push 等操作，大文件会失败。</p>
+      <h2 id="request-size">请求体大�?/h2>
+      <p>Vercel Functions 对请求体�?4.5MB 的限制。如果你需要代�?Git push 等操作，大文件会失败�?/p>
 
       <div class="warn-box">
-        <strong>⚠️ 注意：</strong>对于大文件上传，建议使用 GitHub 原生地址，或者考虑 Cloudflare R2 + Workers 的方案。
-      </div>
+        <strong>⚠️ 注意�?/strong>对于大文件上传，建议使用 GitHub 原生地址，或者考虑 Cloudflare R2 + Workers 的方案�?      </div>
 
       <h2 id="timeout">超时限制</h2>
       <table class="doc-table">
         <thead><tr><th>场景</th><th>Hobby 超时</th><th>Pro 超时</th></tr></thead>
         <tbody>
-          <tr><td>普通请求</td><td>10 秒</td><td>300 秒</td></tr>
-          <tr><td>流式响应</td><td>10 秒</td><td>300 秒</td></tr>
-          <tr><td>上游连接</td><td>10 秒</td><td>300 秒</td></tr>
+          <tr><td>普通请�?/td><td>10 �?/td><td>300 �?/td></tr>
+          <tr><td>流式响应</td><td>10 �?/td><td>300 �?/td></tr>
+          <tr><td>上游连接</td><td>10 �?/td><td>300 �?/td></tr>
         </tbody>
       </table>
 
       <p>对于大文件下载，10 秒可能不够。建议：</p>
       <ul>
         <li>使用 aria2c 多线程下载（每个分片独立请求，不受超时影响）</li>
-        <li>升级到 Pro 计划（300 秒足够大多数场景）</li>
-        <li>对超过 50MB 的文件，考虑直接使用 GitHub 原生地址</li>
+        <li>升级�?Pro 计划�?00 秒足够大多数场景�?/li>
+        <li>对超�?50MB 的文件，考虑直接使用 GitHub 原生地址</li>
       </ul>
 
       <h2 id="concurrent">并发限制</h2>
       <p>Vercel 的并发执行限制：</p>
       <table class="doc-table">
-        <thead><tr><th>计划</th><th>并发执行数</th></tr></thead>
+        <thead><tr><th>计划</th><th>并发执行�?/th></tr></thead>
         <tbody>
           <tr><td>Hobby</td><td>100 并发</td></tr>
           <tr><td>Pro</td><td>1000 并发</td></tr>
-          <tr><td>Enterprise</td><td>可定制</td></tr>
+          <tr><td>Enterprise</td><td>可定�?/td></tr>
         </tbody>
       </table>
 
@@ -158,8 +154,7 @@ curl "https://your-domain.vercel.app/api.github.com/rate_limit"</code>
 
       <h3>1. 启用缓存减少重复请求</h3>
       <div class="code-block">
-        <code>// 在 proxy.js 中缓存静态资源
-const cache = new Map();
+        <code>// �?proxy.js 中缓存静态资�?const cache = new Map();
 
 async function cachedFetch(url, headers) {
   const key = url;
@@ -170,15 +165,14 @@ async function cachedFetch(url, headers) {
   const buf = await res.arrayBuffer();
   const data = { status: res.status, headers: res.headers, body: buf };
   cache.set(key, data);
-  // 5 分钟后过期
-  setTimeout(() => cache.delete(key), 5 * 60 * 1000);
+  // 5 分钟后过�?  setTimeout(() => cache.delete(key), 5 * 60 * 1000);
   return data;
 }</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
       <h3>2. 大文件用 aria2c 分片下载</h3>
-      <p>每个分片是一个独立的 HTTP 请求，Vercel 的 10 秒超时只作用于单个分片，不会中断整个下载。</p>
+      <p>每个分片是一个独立的 HTTP 请求，Vercel �?10 秒超时只作用于单个分片，不会中断整个下载�?/p>
       <div class="code-block">
         <code>aria2c -x 16 -s 16 --max-file-size=50M "URL"</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
@@ -195,11 +189,10 @@ curl "https://your-domain.vercel.app/api.github.com/rate_limit" | jq '.'</code>
       </div>
 
       <h3>4. 设置用量告警</h3>
-      <p>在 Vercel Dashboard → Settings → Notifications 中开启用量告警，当月用量达到 80% 时自动通知你。</p>
+      <p>�?Vercel Dashboard �?Settings �?Notifications 中开启用量告警，当月用量达到 80% 时自动通知你�?/p>
 
       <div class="tip-box">
-        <strong>💡 总结：</strong>Hobby 计划对个人使用完全够用（100 万次请求 + 100GB 带宽）。如果是团队使用或高频下载，建议升级 Pro 或考虑 Cloudflare Workers（每天 10 万次免费请求，无带宽限制）。
-      </div>
+        <strong>💡 总结�?/strong>Hobby 计划对个人使用完全够用（100 万次请求 + 100GB 带宽）。如果是团队使用或高频下载，建议升级 Pro 或考虑 Cloudflare Workers（每�?10 万次免费请求，无带宽限制）�?      </div>
     </main>
   </div>
 

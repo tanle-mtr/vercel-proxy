@@ -25,35 +25,27 @@
         <li><a href="download.html">下载</a></li>
         <li><a href="aria2c.html">aria2c</a></li>
         <li><a href="configuration.html" class="active">配置</a></li>
-        <li><a href="add-new-site.html">扩展</a></li>
-        <li><a href="custom-domain.html">域名</a></li>
         <li><a href="security.html">安全</a></li>
-        <li><a href="limits.html">限制</a></li>
         <li><a href="faq.html">FAQ</a></li>
-        <li><a href="troubleshooting.html">排查</a></li>
-        <li><a href="changelog.html">更新</a></li>
-        <li><a href="license.html">许可证</a></li>
+        <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+          <span class="theme-icon">🌙</span>
+        </button>
       </ul>
-      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
-        <span class="theme-icon">🌙</span>
-      </button>
     </div>
   </nav>
 
-  <div class="docs-layout">
-    <aside class="sidebar">
-      <div class="sidebar-title">配置说明</div>
-      <ul class="sidebar-nav">
-        <li><a href="#proxy-js" class="sidebar-link">proxy.js 详解</a></li>
-        <li><a href="#vercel-json" class="sidebar-link">vercel.json 详解</a></li>
-        <li><a href="#package-json" class="sidebar-link">package.json 详解</a></li>
-        <li><a href="#headers" class="sidebar-link">请求头配置</a></li>
-        <li><a href="#env-vars" class="sidebar-link">环境变量</a></li>
-        <li><a href="#advanced" class="sidebar-link">高级配置</a></li>
-      </ul>
+  <div class="docs-grid">
+    <aside class="docs-sidebar">
+      <h4>⚙️ 配置说明</h4>
+      <a href="#proxy-js" class="active">proxy.js 详解</a>
+      <a href="#vercel-json">vercel.json</a>
+      <a href="#package-json">package.json</a>
+      <a href="#headers">请求头配置</a>
+      <a href="#env-vars">环境变量</a>
+      <a href="#advanced">高级配置</a>
     </aside>
 
-    <main class="docs-main">
+    <main class="docs-content">
       <h1>配置说明</h1>
       <p class="lead">本文档详细解释项目中每个配置文件的每个字段，帮助你深入理解并自定义。</p>
 

@@ -19,7 +19,7 @@
       </button>
       <ul class="nav-links" id="navLinks">
         <li><a href="../index.html">首页</a></li>
-        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="quick-start.html">快速开�?/a></li>
         <li><a href="deployment.html">部署</a></li>
         <li><a href="usage.html" class="active">使用方式</a></li>
         <li><a href="download.html">下载</a></li>
@@ -32,7 +32,7 @@
         <li><a href="faq.html">FAQ</a></li>
         <li><a href="troubleshooting.html">排查</a></li>
         <li><a href="changelog.html">更新</a></li>
-        <li><a href="license.html">许可证</a></li>
+        <li><a href="license.html">许可�?/a></li>
       </ul>
       <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
         <span class="theme-icon">🌙</span>
@@ -40,24 +40,23 @@
     </div>
   </nav>
 
-  <div class="docs-layout">
-    <aside class="sidebar">
-      <div class="sidebar-title">使用方式</div>
-      <ul class="sidebar-nav">
-        <li><a href="#url-format" class="sidebar-link">URL 格式</a></li>
-        <li><a href="#repo-browse" class="sidebar-link">仓库浏览</a></li>
-        <li><a href="#download-archive" class="sidebar-link">Archive 下载</a></li>
-        <li><a href="#download-release" class="sidebar-link">Release 下载</a></li>
-        <li><a href="#raw-files" class="sidebar-link">Raw 文件</a></li>
-        <li><a href="#api-access" class="sidebar-link">API 访问</a></li>
-        <li><a href="#git-integration" class="sidebar-link">Git 集成</a></li>
-        <li><a href="#download-button" class="sidebar-link">下载按钮</a></li>
+  <div class="docs-grid">
+    <aside class="docs-sidebar">
+      <h4>使用方式</h4>
+        <li><a href="#url-format" class="">URL 格式</a></li>
+        <li><a href="#repo-browse" class="">仓库浏览</a></li>
+        <li><a href="#download-archive" class="">Archive 下载</a></li>
+        <li><a href="#download-release" class="">Release 下载</a></li>
+        <li><a href="#raw-files" class="">Raw 文件</a></li>
+        <li><a href="#api-access" class="">API 访问</a></li>
+        <li><a href="#git-integration" class="">Git 集成</a></li>
+        <li><a href="#download-button" class="">下载按钮</a></li>
       </ul>
     </aside>
 
-    <main class="docs-main">
+    <main class="docs-content">
       <h1>使用方式</h1>
-      <p class="lead">GitHub 代理支持多种使用场景，本文档详细介绍每种场景的 URL 格式和示例。</p>
+      <p class="lead">GitHub 代理支持多种使用场景，本文档详细介绍每种场景�?URL 格式和示例�?/p>
 
       <h2 id="url-format">URL 格式</h2>
       <p>所有请求都遵循同一个模式：</p>
@@ -65,11 +64,11 @@
         <code>https://你的域名/<strong>目标域名</strong>/<strong>路径</strong></code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
-      <p>其中 <code>目标域名</code> 是白名单内的 GitHub 域名，<code>路径</code> 是该域名下的实际路径。</p>
+      <p>其中 <code>目标域名</code> 是白名单内的 GitHub 域名�?code>路径</code> 是该域名下的实际路径�?/p>
 
       <table class="doc-table">
         <thead>
-          <tr><th>目标域名</th><th>用途</th><th>示例</th></tr>
+          <tr><th>目标域名</th><th>用�?/th><th>示例</th></tr>
         </thead>
         <tbody>
           <tr><td><code>github.com</code></td><td>仓库页面、Release、Archive、Gist</td><td><code>/github.com/vercel/next.js</code></td></tr>
@@ -78,37 +77,36 @@
           <tr><td><code>codeload.github.com</code></td><td>Archive 打包下载</td><td><code>/codeload.github.com/owner/repo/zip/main</code></td></tr>
           <tr><td><code>objects.githubusercontent.com</code></td><td>Release 附件对象存储</td><td><code>/objects.githubusercontent.com/...</code></td></tr>
           <tr><td><code>avatars.githubusercontent.com</code></td><td>用户头像</td><td><code>/avatars.githubusercontent.com/...</code></td></tr>
-          <tr><td><code>camo.githubusercontent.com</code></td><td>图片缩略图（Camo 代理）</td><td><code>/camo.githubusercontent.com/...</code></td></tr>
-          <tr><td><code>gist.github.com</code></td><td>Gist 页面与 Raw 文件</td><td><code>/gist.github.com/owner/abc123</code></td></tr>
-          <tr><td><code>github.githubassets.com</code></td><td>GitHub 静态资源（CSS/JS）</td><td><code>/github.githubassets.com/...</code></td></tr>
+          <tr><td><code>camo.githubusercontent.com</code></td><td>图片缩略图（Camo 代理�?/td><td><code>/camo.githubusercontent.com/...</code></td></tr>
+          <tr><td><code>gist.github.com</code></td><td>Gist 页面�?Raw 文件</td><td><code>/gist.github.com/owner/abc123</code></td></tr>
+          <tr><td><code>github.githubassets.com</code></td><td>GitHub 静态资源（CSS/JS�?/td><td><code>/github.githubassets.com/...</code></td></tr>
           <tr><td><code>user-images.githubusercontent.com</code></td><td>用户上传图片（README 等）</td><td><code>/user-images.githubusercontent.com/...</code></td></tr>
           <tr><td><code>private-user-images.githubusercontent.com</code></td><td>私有用户图片</td><td><code>/private-user-images.githubusercontent.com/...</code></td></tr>
         </tbody>
       </table>
 
       <h2 id="repo-browse">仓库浏览</h2>
-      <p>在浏览器中直接访问 GitHub 仓库：</p>
+      <p>在浏览器中直接访�?GitHub 仓库�?/p>
       <div class="code-block">
         <code>https://你的域名/github.com/<strong>owner</strong>/<strong>repo</strong></code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
-      <p>示例：</p>
+      <p>示例�?/p>
       <ul>
         <li><code>https://your-domain.vercel.app/github.com/vercel/next.js</code></li>
         <li><code>https://your-domain.vercel.app/github.com/torvalds/linux</code></li>
         <li><code>https://your-domain.vercel.app/github.com/microsoft/vscode</code></li>
       </ul>
       <div class="tip-box">
-        <strong>💡 提示：</strong>页面右下角会自动出现绿色"⬇️ 下载源码"按钮，点击即可下载当前分支的 zip 压缩包。
-      </div>
+        <strong>💡 提示�?/strong>页面右下角会自动出现绿色"⬇️ 下载源码"按钮，点击即可下载当前分支的 zip 压缩包�?      </div>
 
       <h2 id="download-archive">Archive 下载</h2>
-      <p>下载整个仓库的源码压缩包：</p>
+      <p>下载整个仓库的源码压缩包�?/p>
       <div class="code-block">
         <code>https://你的域名/github.com/<strong>owner</strong>/<strong>repo</strong>/archive/refs/heads/<strong>branch</strong>.zip</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
-      <p>示例：</p>
+      <p>示例�?/p>
       <div class="code-block">
         <code># 下载 main 分支
 curl -L "https://your-domain.vercel.app/github.com/vercel/next.js/archive/refs/heads/main.zip" -o nextjs.zip
@@ -122,12 +120,12 @@ curl -L "https://your-domain.vercel.app/github.com/vercel/next.js/archive/refs/t
       </div>
 
       <h2 id="download-release">Release 下载</h2>
-      <p>下载 GitHub Release 中发布的附件：</p>
+      <p>下载 GitHub Release 中发布的附件�?/p>
       <div class="code-block">
         <code>https://你的域名/github.com/<strong>owner</strong>/<strong>repo</strong>/releases/download/<strong>tag</strong>/<strong>filename</strong></code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
-      <p>示例：</p>
+      <p>示例�?/p>
       <div class="code-block">
         <code># 下载 Release 附件
 curl -L "https://your-domain.vercel.app/github.com/owner/repo/releases/download/v1.0.0/app-linux-amd64.zip" -o app.zip</code>
@@ -140,7 +138,7 @@ curl -L "https://your-domain.vercel.app/github.com/owner/repo/releases/download/
         <code>https://你的域名/raw.githubusercontent.com/<strong>owner</strong>/<strong>repo</strong>/<strong>branch</strong>/<strong>path/to/file</strong></code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
-      <p>示例：</p>
+      <p>示例�?/p>
       <div class="code-block">
         <code># 获取 package.json
 curl "https://your-domain.vercel.app/raw.githubusercontent.com/vercel/next.js/canary/package.json"
@@ -151,13 +149,12 @@ curl "https://your-domain.vercel.app/raw.githubusercontent.com/vercel/next.js/ca
       </div>
 
       <h2 id="api-access">API 访问</h2>
-      <p>通过代理访问 GitHub REST API：</p>
+      <p>通过代理访问 GitHub REST API�?/p>
       <div class="code-block">
         <code># 获取仓库信息
 curl "https://your-domain.vercel.app/api.github.com/repos/vercel/next.js"
 
-# 获取文件树
-curl "https://your-domain.vercel.app/api.github.com/repos/vercel/next.js/contents/"
+# 获取文件�?curl "https://your-domain.vercel.app/api.github.com/repos/vercel/next.js/contents/"
 
 # 获取 Issues
 curl "https://your-domain.vercel.app/api.github.com/repos/vercel/next.js/issues?state=open"</code>
@@ -170,16 +167,14 @@ curl "https://your-domain.vercel.app/api.github.com/repos/vercel/next.js/issues?
         <code># Clone 仓库
 git clone https://your-domain.vercel.app/github.com/vercel/next.js
 
-# 添加为远程仓库
-git remote add proxy https://your-domain.vercel.app/github.com/owner/repo
+# 添加为远程仓�?git remote add proxy https://your-domain.vercel.app/github.com/owner/repo
 
 # 拉取指定分支
 git fetch proxy main</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
       <div class="warn-box">
-        <strong>⚠️ 注意：</strong>Git 操作（clone/push/fetch）的可用性取决于 Vercel 的请求体大小限制（约 4.5MB）。大仓库建议使用 GitHub 原生地址。
-      </div>
+        <strong>⚠️ 注意�?/strong>Git 操作（clone/push/fetch）的可用性取决于 Vercel 的请求体大小限制（约 4.5MB）。大仓库建议使用 GitHub 原生地址�?      </div>
 
       <h2 id="download-button">下载按钮</h2>
       <p>当你通过浏览器访问仓库页面时（如 <code>/github.com/owner/repo</code>），页面右下角会自动出现一个绿色按钮：</p>
@@ -189,10 +184,10 @@ git fetch proxy main</code>
       </div>
       <p>按钮特性：</p>
       <ul>
-        <li>固定在右下角（<code>position: fixed</code>），滚动页面不消失</li>
-        <li>自动识别当前分支名（默认 <code>main</code>，支持 <code>master</code> 等）</li>
-        <li>点击直接下载当前分支的 zip 压缩包</li>
-        <li>层级最高（<code>z-index: 99999</code>），不会被页面元素遮挡</li>
+        <li>固定在右下角�?code>position: fixed</code>），滚动页面不消�?/li>
+        <li>自动识别当前分支名（默认 <code>main</code>，支�?<code>master</code> 等）</li>
+        <li>点击直接下载当前分支�?zip 压缩�?/li>
+        <li>层级最高（<code>z-index: 99999</code>），不会被页面元素遮�?/li>
       </ul>
     </main>
   </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>aria2c 多线程下载 - GitHub 代理文档</title>
+  <title>aria2c 多线程下�?- GitHub 代理文档</title>
   <link rel="stylesheet" href="../assets/css/style.css">
   <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
 </head>
@@ -19,7 +19,7 @@
       </button>
       <ul class="nav-links" id="navLinks">
         <li><a href="../index.html">首页</a></li>
-        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="quick-start.html">快速开�?/a></li>
         <li><a href="deployment.html">部署</a></li>
         <li><a href="usage.html">使用方式</a></li>
         <li><a href="download.html">下载</a></li>
@@ -32,7 +32,7 @@
         <li><a href="faq.html">FAQ</a></li>
         <li><a href="troubleshooting.html">排查</a></li>
         <li><a href="changelog.html">更新</a></li>
-        <li><a href="license.html">许可证</a></li>
+        <li><a href="license.html">许可�?/a></li>
       </ul>
       <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
         <span class="theme-icon">🌙</span>
@@ -40,23 +40,23 @@
     </div>
   </nav>
 
-  <div class="docs-layout">
-    <aside class="sidebar">
-      <div class="sidebar-title">aria2c 多线程下载</div>
-      <ul class="sidebar-nav">
-        <li><a href="#install" class="sidebar-link">安装 aria2c</a></li>
-        <li><a href="#basic" class="sidebar-link">基本用法</a></li>
-        <li><a href="#params" class="sidebar-link">参数详解</a></li>
-        <li><a href="#config" class="sidebar-link">配置文件</a></li>
-        <li><a href="#batch" class="sidebar-link">批量下载</a></li>
-        <li><a href="#speed" class="sidebar-link">速度对比</a></li>
-        <li><a href="#tips" class="sidebar-link">实用技巧</a></li>
+  <div class="docs-grid">
+    <aside class="docs-sidebar">
+      <h4>aria2c 多线程下�?/div>
+      <ul class="docs-sidebar-nav">
+        <li><a href="#install" class="">安装 aria2c</a></li>
+        <li><a href="#basic" class="">基本用法</a></li>
+        <li><a href="#params" class="">参数详解</a></li>
+        <li><a href="#config" class="">配置文件</a></li>
+        <li><a href="#batch" class="">批量下载</a></li>
+        <li><a href="#speed" class="">速度对比</a></li>
+        <li><a href="#tips" class="">实用技�?/a></li>
       </ul>
     </aside>
 
-    <main class="docs-main">
-      <h1>aria2c 多线程下载</h1>
-      <p class="lead">aria2c 是一款轻量级的多协议、多线程下载工具，配合 GitHub 代理可以实现极速下载。</p>
+    <main class="docs-content">
+      <h1>aria2c 多线程下�?/h1>
+      <p class="lead">aria2c 是一款轻量级的多协议、多线程下载工具，配�?GitHub 代理可以实现极速下载�?/p>
 
       <h2 id="install">安装 aria2c</h2>
       <table class="doc-table">
@@ -81,7 +81,7 @@
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <p>多线程 + 断点续传（推荐）：</p>
+      <p>多线�?+ 断点续传（推荐）�?/p>
       <div class="code-block">
         <code>aria2c -x 16 -s 16 -c "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
@@ -96,27 +96,27 @@
       <h2 id="params">参数详解</h2>
       <table class="doc-table">
         <thead>
-          <tr><th>参数</th><th>含义</th><th>推荐值</th></tr>
+          <tr><th>参数</th><th>含义</th><th>推荐�?/th></tr>
         </thead>
         <tbody>
           <tr><td><code>-x N</code></td><td>每个服务器的最大连接数</td><td>16</td></tr>
-          <tr><td><code>-s N</code></td><td>文件分片数</td><td>16</td></tr>
-          <tr><td><code>-c</code></td><td>断点续传</td><td>始终开启</td></tr>
-          <tr><td><code>-o name</code></td><td>指定输出文件名</td><td>可选</td></tr>
-          <tr><td><code>-d dir</code></td><td>指定输出目录</td><td>可选</td></tr>
-          <tr><td><code>--max-tries=N</code></td><td>最大重试次数</td><td>30</td></tr>
-          <tr><td><code>--retry-wait=N</code></td><td>重试间隔（秒）</td><td>5</td></tr>
-          <tr><td><code>--timeout=N</code></td><td>连接超时（秒）</td><td>30</td></tr>
+          <tr><td><code>-s N</code></td><td>文件分片�?/td><td>16</td></tr>
+          <tr><td><code>-c</code></td><td>断点续传</td><td>始终开�?/td></tr>
+          <tr><td><code>-o name</code></td><td>指定输出文件�?/td><td>可�?/td></tr>
+          <tr><td><code>-d dir</code></td><td>指定输出目录</td><td>可�?/td></tr>
+          <tr><td><code>--max-tries=N</code></td><td>最大重试次�?/td><td>30</td></tr>
+          <tr><td><code>--retry-wait=N</code></td><td>重试间隔（秒�?/td><td>5</td></tr>
+          <tr><td><code>--timeout=N</code></td><td>连接超时（秒�?/td><td>30</td></tr>
           <tr><td><code>--max-concurrent-downloads=N</code></td><td>最大并发下载数</td><td>3</td></tr>
-          <tr><td><code>--min-split-size=N</code></td><td>最小分片大小</td><td>1M</td></tr>
-          <tr><td><code>--file-allocation=none</td><td>文件预分配策略</td><td>none（Vercel 不需要）</td></tr>
-          <tr><td><code>-q</code></td><td>安静模式（不输出日志）</td><td>可选</td></tr>
+          <tr><td><code>--min-split-size=N</code></td><td>最小分片大�?/td><td>1M</td></tr>
+          <tr><td><code>--file-allocation=none</td><td>文件预分配策�?/td><td>none（Vercel 不需要）</td></tr>
+          <tr><td><code>-q</code></td><td>安静模式（不输出日志�?/td><td>可�?/td></tr>
           <tr><td><code>-v</code></td><td>详细日志</td><td>调试时用</td></tr>
         </tbody>
       </table>
 
       <h2 id="config">配置文件</h2>
-      <p>创建 <code>~/.aria2/aria2.conf</code> 配置文件，避免每次输入长命令：</p>
+      <p>创建 <code>~/.aria2/aria2.conf</code> 配置文件，避免每次输入长命令�?/p>
       <div class="code-block">
         <code># ~/.aria2/aria2.conf
 
@@ -127,8 +127,7 @@ max-connection-per-server=16
 split=16
 min-split-size=1M
 
-# 超时和重试
-timeout=30
+# 超时和重�?timeout=30
 max-tries=30
 retry-wait=5
 
@@ -139,8 +138,7 @@ file-allocation=none
 log-level=notice
 quiet=false
 
-# 代理设置（可选，如果你有 HTTP 代理）
-# http-proxy=http://127.0.0.1:7890
+# 代理设置（可选，如果你有 HTTP 代理�?# http-proxy=http://127.0.0.1:7890
 # https-proxy=http://127.0.0.1:7890
 
 # 禁用 IPv6（某些网络下 IPv6 不稳定）
@@ -151,7 +149,7 @@ user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <p>使用配置文件启动：</p>
+      <p>使用配置文件启动�?/p>
       <div class="code-block">
         <code>aria2c --conf-path=~/.aria2/aria2.conf "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
@@ -159,7 +157,7 @@ user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36</code>
 
       <h2 id="batch">批量下载</h2>
       <h3>方式一：URL 列表文件</h3>
-      <p>创建 <code>urls.txt</code>：</p>
+      <p>创建 <code>urls.txt</code>�?/p>
       <div class="code-block">
         <code># urls.txt
 https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip
@@ -176,8 +174,7 @@ https://your-domain.vercel.app/github.com/owner/repo/releases/download/v1.0/app-
 
       <h3>方式二：结合 GitHub API 自动获取 Release 链接</h3>
       <div class="code-block">
-        <code># 获取所有 Release 下载链接并保存
-curl -s "https://your-domain.vercel.app/api.github.com/repos/owner/repo/releases" \
+        <code># 获取所�?Release 下载链接并保�?curl -s "https://your-domain.vercel.app/api.github.com/repos/owner/repo/releases" \
   | jq -r '.[].assets[].browser_download_url' > urls.txt
 
 # 使用 aria2c 批量下载
@@ -204,23 +201,22 @@ done</code>
       <h2 id="speed">速度对比</h2>
       <table class="doc-table">
         <thead>
-          <tr><th>下载方式</th><th>平均速度</th><th>稳定性</th></tr>
+          <tr><th>下载方式</th><th>平均速度</th><th>稳定�?/th></tr>
         </thead>
         <tbody>
-          <tr><td>浏览器直连</td><td>~200 KB/s</td><td>经常超时</td></tr>
-          <tr><td>cURL 单线程</td><td>~500 KB/s</td><td>中等</td></tr>
-          <tr><td>Wget 单线程</td><td>~500 KB/s</td><td>中等</td></tr>
+          <tr><td>浏览器直�?/td><td>~200 KB/s</td><td>经常超时</td></tr>
+          <tr><td>cURL 单线�?/td><td>~500 KB/s</td><td>中等</td></tr>
+          <tr><td>Wget 单线�?/td><td>~500 KB/s</td><td>中等</td></tr>
           <tr><td>aria2c 4 线程</td><td>~2-5 MB/s</td><td>良好</td></tr>
           <tr><td>aria2c 8 线程</td><td>~5-10 MB/s</td><td>良好</td></tr>
           <tr><td><strong>aria2c 16 线程</strong></td><td><strong>~10-30 MB/s</strong></td><td><strong>优秀</strong></td></tr>
-          <tr><td>aria2c 32 线程</td><td>~15-40 MB/s</td><td>可能触发限速</td></tr>
+          <tr><td>aria2c 32 线程</td><td>~15-40 MB/s</td><td>可能触发限�?/td></tr>
         </tbody>
       </table>
       <div class="tip-box">
-        <strong>💡 建议：</strong>16 线程是性价比最高的选择。超过 16 线程可能不会明显提速，反而可能触发 GitHub 的速率限制。
-      </div>
+        <strong>💡 建议�?/strong>16 线程是性价比最高的选择。超�?16 线程可能不会明显提速，反而可能触�?GitHub 的速率限制�?      </div>
 
-      <h2 id="tips">实用技巧</h2>
+      <h2 id="tips">实用技�?/h2>
       <h3>1. 一行命令下载并解压</h3>
       <div class="code-block">
         <code>aria2c -x 16 -s 16 -c -o repo.zip "URL" && unzip -q repo.zip && rm repo.zip</code>
@@ -233,23 +229,22 @@ done</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <h3>3. 下载完成后通知（macOS）</h3>
+      <h3>3. 下载完成后通知（macOS�?/h3>
       <div class="code-block">
         <code>aria2c -x 16 -s 16 -c "URL" && osascript -e 'display notification "下载完成" with title "aria2c"'</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <h3>4. 定时清理旧文件</h3>
+      <h3>4. 定时清理旧文�?/h3>
       <div class="code-block">
-        <code># 删除 7 天前的下载文件
-find ~/Downloads -name "*.zip" -mtime +7 -delete</code>
+        <code># 删除 7 天前的下载文�?find ~/Downloads -name "*.zip" -mtime +7 -delete</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
       </div>
 
-      <h3>5. 一键下载脚本模板</h3>
+      <h3>5. 一键下载脚本模�?/h3>
       <div class="code-block">
         <code>#!/bin/bash
-# quick-dl.sh - 一键下载 GitHub 仓库
+# quick-dl.sh - 一键下�?GitHub 仓库
 # 用法: ./quick-dl.sh owner/repo [branch]
 
 DOMAIN="https://your-domain.vercel.app"
@@ -263,10 +258,10 @@ echo "📦 正在下载 ${REPO} (${BRANCH})..."
 aria2c -x 16 -s 16 -c -o "${FILENAME}" "${URL}"
 
 if [ $? -eq 0 ]; then
-  echo "✅ 下载完成: ${FILENAME}"
+  echo "�?下载完成: ${FILENAME}"
   echo "📂 文件大小: $(du -h ${FILENAME} | cut -f1)"
 else
-  echo "❌ 下载失败"
+  echo "�?下载失败"
   exit 1
 fi</code>
         <button class="copy-btn" onclick="copyCode(this)">复制</button>
