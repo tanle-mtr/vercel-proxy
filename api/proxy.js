@@ -277,7 +277,14 @@ module.exports = async (req, res) => {
     if(typeof u!=='string'||!u)return u;
     for(var k in m){if(u.indexOf(k)===0)return m[k]+u.substring(k.length);}
     if(u.indexOf('//')===0){
-      for(var k in m){if(u.indexOf('//'+k.substring(8))===0)return m[k]+u.substring(k.length+2);}
+      for(var k in m){
+        var hostPart = k.replace(/^https?:\/\//, '');
+        var protoRel = '//' + hostPart;
+        if(u.indexOf(protoRel)===0){
+          var skipLen = protoRel.length;
+          return m[k] + u.substring(skipLen);
+        }
+      }
     }
     if(u.charAt(0)==='/'){
       for(var i=0;i<pref.length;i++){if(u.indexOf(pref[i])===0)return u;}
