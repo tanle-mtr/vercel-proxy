@@ -7,7 +7,10 @@ const ALLOWED_PREFIXES = [
   'objects.githubusercontent.com',
   'camo.githubusercontent.com',
   'avatars.githubusercontent.com',
-  'gist.github.com'
+  'gist.github.com',
+  'github.githubassets.com',
+  'user-images.githubusercontent.com',
+  'private-user-images.githubusercontent.com'
 ];
 
 function isAllowedHost(host) {
@@ -69,7 +72,22 @@ function replaceText(text) {
     .replace(/https:\/\/codeload\.github\.com/g, '/codeload.github.com')
     .replace(/https:\/\/objects\.githubusercontent\.com/g, '/objects.githubusercontent.com')
     .replace(/https:\/\/avatars\.githubusercontent\.com/g, '/avatars.githubusercontent.com')
-    .replace(/https:\/\/camo\.githubusercontent\.com/g, '/camo.githubusercontent.com');
+    .replace(/https:\/\/camo\.githubusercontent\.com/g, '/camo.githubusercontent.com')
+    .replace(/https:\/\/gist\.github\.com/g, '/gist.github.com')
+    .replace(/https:\/\/github\.githubassets\.com/g, '/github.githubassets.com')
+    .replace(/https:\/\/user-images\.githubusercontent\.com/g, '/user-images.githubusercontent.com')
+    .replace(/https:\/\/private-user-images\.githubusercontent\.com/g, '/private-user-images.githubusercontent.com')
+    .replace(/\/\/github\.com\//g, '/github.com/')
+    .replace(/\/\/api\.github\.com\//g, '/api.github.com/')
+    .replace(/\/\/raw\.githubusercontent\.com\//g, '/raw.githubusercontent.com/')
+    .replace(/\/\/codeload\.github\.com\//g, '/codeload.github.com/')
+    .replace(/\/\/objects\.githubusercontent\.com\//g, '/objects.githubusercontent.com/')
+    .replace(/\/\/avatars\.githubusercontent\.com\//g, '/avatars.githubusercontent.com/')
+    .replace(/\/\/camo\.githubusercontent\.com\//g, '/camo.githubusercontent.com/')
+    .replace(/\/\/gist\.github\.com\//g, '/gist.github.com/')
+    .replace(/\/\/github\.githubassets\.com\//g, '/github.githubassets.com/')
+    .replace(/\/\/user-images\.githubusercontent\.com\//g, '/user-images.githubusercontent.com/')
+    .replace(/\/\/private-user-images\.githubusercontent\.com\//g, '/private-user-images.githubusercontent.com/');
 }
 
 // 提取 owner/repo 和分支
@@ -139,7 +157,11 @@ module.exports = async (req, res) => {
       '/codeload.github.com',
       '/objects.githubusercontent.com',
       '/camo.githubusercontent.com',
-      '/avatars.githubusercontent.com'
+      '/avatars.githubusercontent.com',
+      '/gist.github.com',
+      '/github.githubassets.com',
+      '/user-images.githubusercontent.com',
+      '/private-user-images.githubusercontent.com'
     ];
 
     let matched = null;
@@ -219,7 +241,7 @@ module.exports = async (req, res) => {
     upstreamRes.headers.forEach((val, key) => {
       const low = key.toLowerCase();
       if (['content-encoding', 'transfer-encoding', 'content-security-policy',
-           'content-security-policy-report-only', 'clear-site-data'].includes(low)) return;
+           'content-security-policy-report-only', 'clear-site-data', 'content-length'].includes(low)) return;
       respHeaders[key] = val;
     });
     respHeaders['Access-Control-Allow-Origin'] = '*';
@@ -236,13 +258,42 @@ module.exports = async (req, res) => {
 
       // 注入极简劫持脚本（可选，不影响下载按钮）
       const fixScript = `<script>
-        (function(){
-          var m={'https://github.com':'/github.com','https://api.github.com':'/api.github.com','https://raw.githubusercontent.com':'/raw.githubusercontent.com','https://codeload.github.com':'/codeload.github.com'};
-          function p(u){for(var k in m){if(u.indexOf(k)===0)return m[k]+u.substring(k.length);}return u;}
-          var _f=window.fetch;window.fetch=function(i,o){if(typeof i==='string')i=p(i);else if(i instanceof Request)i=new Request(p(i.url),i);return _f.call(this,i,o);};
-          var _o=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){arguments[1]=p(u);return _o.apply(this,arguments);};
-        })();
-      </script>`;
+(function(){
+  var m={
+    'https://github.com':'/github.com',
+    'https://api.github.com':'/api.github.com',
+    'https://raw.githubusercontent.com':'/raw.githubusercontent.com',
+    'https://codeload.github.com':'/codeload.github.com',
+    'https://objects.githubusercontent.com':'/objects.githubusercontent.com',
+    'https://avatars.githubusercontent.com':'/avatars.githubusercontent.com',
+    'https://camo.githubusercontent.com':'/camo.githubusercontent.com',
+    'https://gist.github.com':'/gist.github.com',
+    'https://github.githubassets.com':'/github.githubassets.com',
+    'https://user-images.githubusercontent.com':'/user-images.githubusercontent.com',
+    'https://private-user-images.githubusercontent.com':'/private-user-images.githubusercontent.com'
+  };
+  var pref=['/github.com','/api.github.com','/raw.githubusercontent.com','/codeload.github.com','/objects.githubusercontent.com','/camo.githubusercontent.com','/avatars.githubusercontent.com','/gist.github.com','/github.githubassets.com','/user-images.githubusercontent.com','/private-user-images.githubusercontent.com'];
+  function p(u){
+    if(typeof u!=='string'||!u)return u;
+    for(var k in m){if(u.indexOf(k)===0)return m[k]+u.substring(k.length);}
+    if(u.indexOf('//')===0){
+      for(var k in m){if(u.indexOf('//'+k.substring(8))===0)return m[k]+u.substring(k.length+2);}
+    }
+    if(u.charAt(0)==='/'){
+      for(var i=0;i<pref.length;i++){if(u.indexOf(pref[i])===0)return u;}
+      var pg=location.pathname;
+      for(var i=0;i<pref.length;i++){if(pg.indexOf(pref[i]+'/')===0)return pref[i]+u;}
+    }
+    return u;
+  }
+  var _f=window.fetch;window.fetch=function(i,o){
+    if(typeof i==='string')i=p(i);
+    else if(i instanceof Request)i=new Request(p(i.url),i);
+    return _f.call(this,i,o);
+  };
+  var _o=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){arguments[1]=p(u);return _o.apply(this,arguments);};
+})();
+</script>`;
       html = html.replace('</head>', fixScript + '</head>');
 
       res.writeHead(status, { ...respHeaders, 'Content-Type': 'text/html; charset=utf-8' });
