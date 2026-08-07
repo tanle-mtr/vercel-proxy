@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Proxy - 文档</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a class="nav-brand" href="index.html">
+        <span class="nav-logo">⬇️</span>
+        <span class="nav-title">GitHub Proxy</span>
+      </a>
+      <div class="nav-links">
+        <a href="docs/quick-start.html" class="nav-link">快速开始</a>
+        <a href="docs/usage.html" class="nav-link">使用指南</a>
+        <a href="docs/download.html" class="nav-link">下载</a>
+        <a href="docs/configuration.html" class="nav-link">配置</a>
+        <a href="docs/troubleshooting.html" class="nav-link">排查</a>
+        <a href="docs/faq.html" class="nav-link">FAQ</a>
+        <button class="theme-toggle" id="themeToggle" aria-label="切换主题">🌙</button>
+        <a href="https://github.com/tanle-mtr/vercel-proxy" class="nav-link nav-github" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero 区域 -->
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero-title">⬇️ GitHub Proxy</h1>
+      <p class="hero-subtitle">
+        基于 Vercel Functions 的 GitHub 高速下载代理<br>
+        支持仓库浏览 · Release 下载 · Raw 文件 · aria2c 多线程加速
+      </p>
+      <div class="hero-buttons">
+        <a href="docs/quick-start.html" class="btn btn-primary">🚀 快速开始</a>
+        <a href="docs/usage.html" class="btn btn-secondary">📖 使用指南</a>
+      </div>
+      <div class="hero-badges">
+        <span class="badge badge-green">MIT License</span>
+        <span class="badge badge-blue">Vercel Ready</span>
+        <span class="badge badge-orange">Zero Dependencies</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 特性卡片 -->
+  <section class="features">
+    <div class="container">
+      <div class="row">
+        <div class="col col-4">
+          <div class="feature-card">
+            <div class="feature-icon">📦</div>
+            <h3>仓库浏览</h3>
+            <p>通过代理访问 GitHub 仓库页面，右下角自动出现"下载源码"按钮，一键获取整个仓库的压缩包。</p>
+          </div>
+        </div>
+        <div class="col col-4">
+          <div class="feature-card">
+            <div class="feature-icon">⬇️</div>
+            <h3>高速下载</h3>
+            <p>Release 附件、Raw 文件、Archive 压缩包，所有下载请求通过 Vercel 边缘节点加速。</p>
+          </div>
+        </div>
+        <div class="col col-4">
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>aria2c 加速</h3>
+            <p>完美支持 aria2c 多线程下载，16 线程并发拉取，大文件下载速度提升 10 倍以上。</p>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:24px">
+        <div class="col col-4">
+          <div class="feature-card">
+            <div class="feature-icon">🔌</div>
+            <h3>API 代理</h3>
+            <p>直接代理 api.github.com，获取纯净 JSON 数据，可用于脚本自动化、CI/CD 流程集成。</p>
+          </div>
+        </div>
+        <div class="col col-4">
+          <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3>安全可靠</h3>
+            <p>白名单域名限制，仅代理 GitHub 相关域名。零依赖设计，无第三方库风险。</p>
+          </div>
+        </div>
+        <div class="col col-4">
+          <div class="feature-card">
+            <div class="feature-icon">💰</div>
+            <h3>完全免费</h3>
+            <p>基于 Vercel Hobby 计划，每月 100 万次请求、100GB 带宽，个人使用完全够用。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 三步部署 -->
+  <section class="steps">
+    <div class="container">
+      <h2 class="section-title">🚀 三步部署</h2>
+      <div class="row">
+        <div class="col col-4">
+          <div class="step-card text-center">
+            <div class="step-number">1</div>
+            <h3>克隆仓库</h3>
+            <p>将项目克隆到你的 GitHub 账号下</p>
+            <code class="code-block">git clone https://github.com/tanle-mtr/vercel-proxy</code>
+          </div>
+        </div>
+        <div class="col col-4">
+          <div class="step-card text-center">
+            <div class="step-number">2</div>
+            <h3>导入 Vercel</h3>
+            <p>在 Vercel Dashboard 点击 Add New → Project，选择该仓库</p>
+            <a href="docs/quick-start.html" class="btn btn-primary btn-sm">查看详细步骤 →</a>
+          </div>
+        </div>
+        <div class="col col-4">
+          <div class="step-card text-center">
+            <div class="step-number">3</div>
+            <h3>开始使用</h3>
+            <p>部署完成后，访问你的域名即可开始使用</p>
+            <code class="code-block">https://your-domain.vercel.app/github.com/owner/repo</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使用方式表格 -->
+  <section class="usage-preview">
+    <div class="container container-narrow">
+      <h2 class="section-title text-center">📝 使用方式</h2>
+      <table class="usage-table">
+        <thead>
+          <tr>
+            <th>场景</th>
+            <th>URL 格式</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>📦 仓库浏览</td>
+            <td><code>/github.com/owner/repo</code></td>
+          </tr>
+          <tr>
+            <td>⬇️ Release 下载</td>
+            <td><code>/github.com/owner/repo/releases</code></td>
+          </tr>
+          <tr>
+            <td>📄 Raw 文件</td>
+            <td><code>/raw.githubusercontent.com/owner/repo/branch/file</code></td>
+          </tr>
+          <tr>
+            <td>📦 Archive</td>
+            <td><code>/github.com/owner/repo/archive/main.zip</code></td>
+          </tr>
+          <tr>
+            <td>🔌 API</td>
+            <td><code>/api.github.com/repos/owner/repo</code></td>
+          </tr>
+          <tr>
+            <td>⚡ aria2c</td>
+            <td><code>aria2c -x 16 -s 16 "https://域名/.../main.zip"</code></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="text-center" style="margin-top:2rem">
+        <a href="docs/usage.html" class="btn btn-primary">查看完整使用指南 →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+    <div class="footer-col">
+          <h4>文档</h4>
+          <a href="docs/quick-start.html">快速开始</a>
+          <a href="docs/usage.html">使用指南</a>
+          <a href="docs/download.html">下载指南</a>
+          <a href="docs/configuration.html">配置说明</a>
+        </div>
+        <div class="footer-col">
+          <h4>项目</h4>
+          <a href="https://github.com/tanle-mtr/vercel-proxy" target="_blank" rel="noopener">GitHub 仓库</a>
+          <a href="https://github.com/tanle-mtr/vercel-proxy/issues" target="_blank" rel="noopener">问题反馈</a>
+        </div>
+        <div class="footer-col">
+          <h4>更多</h4>
+          <a href="docs/license.html">MIT License</a>
+          <a href="docs/changelog.html">更新日志</a>
+          <a href="docs/faq.html">常见问题</a>
+          <a href="docs/troubleshooting.html">故障排查</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Copyright © 2026 GitHub Proxy. 基于 MIT 许可证开源。</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

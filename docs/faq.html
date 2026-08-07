@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>常见问题 - GitHub 代理文档</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-brand">
+        <span class="brand-icon">⬇️</span>
+        <span class="brand-text">GitHub 代理</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="切换菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="deployment.html">部署</a></li>
+        <li><a href="usage.html">使用方式</a></li>
+        <li><a href="download.html">下载</a></li>
+        <li><a href="aria2c.html">aria2c</a></li>
+        <li><a href="configuration.html">配置</a></li>
+        <li><a href="add-new-site.html">扩展</a></li>
+        <li><a href="custom-domain.html">域名</a></li>
+        <li><a href="security.html">安全</a></li>
+        <li><a href="limits.html">限制</a></li>
+        <li><a href="faq.html" class="active">FAQ</a></li>
+        <li><a href="troubleshooting.html">排查</a></li>
+        <li><a href="changelog.html">更新</a></li>
+        <li><a href="license.html">许可证</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">常见问题</div>
+      <ul class="sidebar-nav">
+        <li><a href="#q1" class="sidebar-link">为什么网页加载不全？</a></li>
+        <li><a href="#q2" class="sidebar-link">下载速度慢怎么办？</a></li>
+        <li><a href="#q3" class="sidebar-link">能代理私有仓库吗？</a></li>
+        <li><a href="#q4" class="sidebar-link">支持 Git Clone 吗？</a></li>
+        <li><a href="#q5" class="sidebar-link">会泄露我的 IP 吗？</a></li>
+        <li><a href="#q6" class="sidebar-link">能部署到国内服务器吗？</a></li>
+        <li><a href="#q7" class="sidebar-link">和 Cloudflare Worker 比哪个好？</a></li>
+        <li><a href="#q8" class="sidebar-link">为什么大文件下载失败？</a></li>
+        <li><a href="#q9" class="sidebar-link">如何监控用量？</a></li>
+        <li><a href="#q10" class="sidebar-link">可以商用吗？</a></li>
+        <li><a href="#q11" class="sidebar-link">支持 WebSocket 吗？</a></li>
+        <li><a href="#q12" class="sidebar-link">如何更新代理代码？</a></li>
+        <li><a href="#q13" class="sidebar-link">为什么有时返回 403？</a></li>
+      </ul>
+    </aside>
+
+    <main class="docs-main">
+      <h1>常见问题 (FAQ)</h1>
+      <p class="lead">汇总用户最常问的问题，快速找到答案。</p>
+
+      <h2 id="q1">❓ 为什么 GitHub 网页加载不全？文件树不显示？</h2>
+      <p><strong>答：</strong>这是 Vercel Functions 的固有局限。GitHub 是重度 SPA（单页应用），它通过 JavaScript 动态调用 <code>api.github.com</code> 获取文件树数据。虽然我们注入了 <code>fetch</code> 和 <code>XMLHttpRequest</code> 劫持脚本，但 GitHub 的前端代码可能使用：</p>
+      <ul>
+        <li><code>Service Worker</code> — 在独立线程运行，无法被页面脚本劫持</li>
+        <li><code>动态 import()</code> — 模块加载走独立通道</li>
+        <li><code>eval()</code> 拼接的 URL — 运行时才生成，静态替换抓不到</li>
+      </ul>
+      <p><strong>解决方案：</strong></p>
+      <ul>
+        <li>✅ 下载需求 → 本代理完美胜任（Archive/Release/Raw）</li>
+        <li>✅ 浏览需求 → 使用 <a href="https://github.com" target="_blank">github.com</a> 原生访问</li>
+        <li>✅ 完美反代 → 迁移到 <a href="https://workers.cloudflare.com/" target="_blank">Cloudflare Workers</a>（边缘层改写，无需 JS 劫持）</li>
+      </ul>
+
+      <h2 id="q2">❓ 下载速度慢怎么办？</h2>
+      <p><strong>答：</strong>使用 aria2c 多线程下载，速度可提升 10-50 倍：</p>
+      <div class="code-block">
+        <code>aria2c -x 16 -s 16 -c "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <p>另外确认：</p>
+      <ul>
+        <li>你所在网络到 Vercel 边缘节点的路由是否通畅（Vercel 在国内部分地区路由不佳）</li>
+        <li>是否触发了 GitHub 的速率限制（见 <a href="limits.html">限制</a>）</li>
+        <li>Vercel 月带宽是否用完（Hobby 100GB/月）</li>
+      </ul>
+
+      <h2 id="q3">❓ 能代理私有仓库吗？</h2>
+      <p><strong>答：</strong>可以，但需要配置 GitHub Token。在 Vercel Dashboard → Settings → Environment Variables 添加：</p>
+      <table class="doc-table">
+        <thead><tr><th>变量名</th><th>值</th></tr></thead>
+        <tbody>
+          <tr><td><code>GITHUB_TOKEN</code></td><td>你的 Personal Access Token（需要 repo 权限）</td></tr>
+        </tbody>
+      </table>
+      <p>然后在 <code>proxy.js</code> 中添加：</p>
+      <div class="code-block">
+        <code>if (process.env.GITHUB_TOKEN) {
+  headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="q4">❓ 支持 Git Clone 吗？</h2>
+      <p><strong>答：</strong>理论上支持，但实际体验取决于仓库大小：</p>
+      <ul>
+        <li>✅ 小仓库（< 50MB）：<code>git clone https://your-domain.vercel.app/github.com/owner/repo</code> 可以成功</li>
+        <li>⚠️ 大仓库（> 100MB）：可能因 Vercel 10 秒超时中断</li>
+        <li>❌ 超大仓库（> 500MB）：不建议通过代理 clone</li>
+      </ul>
+      <p>建议：clone 用原生 GitHub 地址，下载 Release/Archive 用代理。</p>
+
+      <h2 id="q5">❓ 会泄露我的 IP 吗？</h2>
+      <p><strong>答：</strong>不会。所有请求都经过 Vercel 的边缘节点，目标服务器（GitHub）看到的 IP 是 Vercel 的出口 IP，不是你的真实 IP。但要注意：</p>
+      <ul>
+        <li>如果你在请求中带了 <code>Authorization: Bearer TOKEN</code>，Token 会经过 Vercel 服务器（Vercel 不会记录，但理论上可见）</li>
+        <li>建议使用环境变量存储 Token，不要在 URL 中传递</li>
+      </ul>
+
+      <h2 id="q6">❓ 能部署到国内服务器吗？</h2>
+      <p><strong>答：</strong>可以，但需要一台有公网 IP 的服务器：</p>
+      <ul>
+        <li>将 <code>api/proxy.js</code> 改写为 Express.js 中间件</li>
+        <li>部署到阿里云/腾讯云轻量服务器</li>
+        <li>优点：国内访问快、无 Vercel 额度限制</li>
+        <li>缺点：需要自己维护服务器、HTTPS 证书</li>
+      </ul>
+
+      <h2 id="q7">❓ 和 Cloudflare Worker 比哪个好？</h2>
+      <table class="doc-table">
+        <thead><tr><th>对比项</th><th>Vercel Functions</th><th>Cloudflare Workers</th></tr></thead>
+        <tbody>
+          <tr><td>网页反代</td><td>⚠️ 部分可用</td><td>✅ 完美（边缘改写）</td></tr>
+          <tr><td>文件下载</td><td>✅ 完美</td><td>✅ 完美</td></tr>
+          <tr><td>部署难度</td><td>✅ 极简（Git 推送即部署）</td><td>⚠️ 需 Wrangler CLI</td></tr>
+          <tr><td>免费额度</td><td>100 万次/月 + 100GB</td><td>10 万次/天 + 无限带宽</td></tr>
+          <tr><td>冷启动</td><td>~100ms</td><td>~0ms（边缘执行）</td></tr>
+          <tr><td>WebSocket</td><td>❌ 不支持</td><td>✅ 支持</td></tr>
+          <tr><td>学习曲线</td><td>✅ 低</td><td>⚠️ 中</td></tr>
+        </tbody>
+      </table>
+      <p><strong>建议：</strong>下载加速选 Vercel（简单），完美网页反代选 CF Worker。</p>
+
+      <h2 id="q8">❓ 为什么大文件下载失败？</h2>
+      <p><strong>答：</strong>常见原因和解决方案：</p>
+      <table class="doc-table">
+        <thead><tr><th>原因</th><th>解决方案</th></tr></thead>
+        <tbody>
+          <tr><td>Vercel 10 秒超时（Hobby）</td><td>用 aria2c 多线程分片下载</td></tr>
+          <tr><td>文件 > 4.5MB 请求体限制</td><td>仅影响上传，下载不受影响</td></tr>
+          <tr><td>GitHub 限速（未认证 60次/小时）</td><td>配置 GITHUB_TOKEN 提升到 5000次/小时</td></tr>
+          <tr><td>Vercel 月带宽用完</td><td>升级 Pro 或等下月重置</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="q9">❓ 如何监控用量？</h2>
+      <div class="code-block">
+        <code># Vercel CLI 查看用量
+vercel inspect
+
+# 查看实时日志
+vercel logs --follow
+
+# 查看 GitHub API 剩余额度
+curl "https://your-domain.vercel.app/api.github.com/rate_limit" | jq '.'</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <p>也可以在 Vercel Dashboard → Analytics 查看可视化用量图表。</p>
+
+      <h2 id="q10">❓ 可以商用吗？</h2>
+      <p><strong>答：</strong>可以。本项目使用 MIT License，允许商用。但需要注意：</p>
+      <ul>
+        <li>Vercel Hobby 计划仅供个人使用，商用需升级 Pro（$20/月/人）</li>
+        <li>GitHub API 的使用需遵守 <a href="https://docs.github.com/en/site-policy/github-terms/github-acceptable-use-policies" target="_blank">GitHub Acceptable Use Policies</a></li>
+        <li>不要将代理用于下载盗版内容或恶意软件</li>
+      </ul>
+
+      <h2 id="q11">❓ 支持 WebSocket 吗？</h2>
+      <p><strong>答：</strong>不支持。Vercel Functions 目前不支持 WebSocket 连接。如果你需要代理 WebSocket（如 GitHub Codespaces），需要使用 Cloudflare Workers 或自建服务器。</p>
+
+      <h2 id="q12">❓ 如何更新代理代码？</h2>
+      <p>两种方式：</p>
+      <h3>方式一：GitHub 推送（推荐）</h3>
+      <div class="code-block">
+        <code># 修改代码后
+git add .
+git commit -m "fix: 修复 xxx 问题"
+git push origin main
+# Vercel 自动检测并重新部署</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>方式二：Vercel Dashboard 在线编辑</h3>
+      <ol>
+        <li>打开 Vercel Dashboard → 你的项目</li>
+        <li>点击左侧 <strong>Files</strong></li>
+        <li>找到 <code>api/proxy.js</code>，点击编辑</li>
+        <li>修改后点击 <strong>Save</strong>，自动部署</li>
+      </ol>
+
+      <h2 id="q13">❓ 为什么有时返回 403？</h2>
+      <p><strong>答：</strong>403 可能来自两个地方：</p>
+      <table class="doc-table">
+        <thead><tr><th>来源</th><th>原因</th><th>解决方案</th></tr></thead>
+        <tbody>
+          <tr><td>本代理</td><td>请求的域名不在白名单中</td><td>检查 URL 格式是否正确</td></tr>
+          <tr><td>GitHub</td><td>触发了 GitHub 的速率限制或 IP 封禁</td><td>配置 GITHUB_TOKEN 或等待重置</td></tr>
+          <tr><td>GitHub</td><td>请求了私有仓库但没有认证</td><td>添加 Authorization 头</td></tr>
+        </tbody>
+      </table>
+
+      <div class="tip-box">
+        <strong>💡 仍有疑问？</strong>请在 <a href="https://github.com/tanle-mtr" target="_blank">GitHub Issues</a> 中提问，或查阅 <a href="troubleshooting.html">排查指南</a>。
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>© 2026 tanle-mtr · Licensed under <a href="license.html">MIT License</a></p>
+      <p><a href="https://github.com/tanle-mtr" target="_blank" rel="noopener">GitHub</a> · <a href="faq.html">FAQ</a> · <a href="troubleshooting.html">排查指南</a></p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

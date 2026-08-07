@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自定义域名 - GitHub 代理文档</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-brand">
+        <span class="brand-icon">⬇️</span>
+        <span class="brand-text">GitHub 代理</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="切换菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="deployment.html">部署</a></li>
+        <li><a href="usage.html">使用方式</a></li>
+        <li><a href="download.html">下载</a></li>
+        <li><a href="aria2c.html">aria2c</a></li>
+        <li><a href="configuration.html">配置</a></li>
+        <li><a href="add-new-site.html">扩展</a></li>
+        <li><a href="custom-domain.html" class="active">域名</a></li>
+        <li><a href="security.html">安全</a></li>
+        <li><a href="limits.html">限制</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="troubleshooting.html">排查</a></li>
+        <li><a href="changelog.html">更新</a></li>
+        <li><a href="license.html">许可证</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">自定义域名</div>
+      <ul class="sidebar-nav">
+        <li><a href="#why" class="sidebar-link">为什么要绑定域名</a></li>
+        <li><a href="#buy-domain" class="sidebar-link">购买域名</a></li>
+        <li><a href="#vercel-dns" class="sidebar-link">Vercel DNS 配置</a></li>
+        <li><a href="#cname" class="sidebar-link">CNAME 配置</a></li>
+        <li><a href="#a-record" class="sidebar-link">A 记录配置</a></li>
+        <li><a href="#https" class="sidebar-link">HTTPS 证书</a></li>
+        <li><a href="#verify" class="sidebar-link">验证配置</a></li>
+        <li><a href="#providers" class="sidebar-link">常见域名商指南</a></li>
+      </ul>
+    </aside>
+
+    <main class="docs-main">
+      <h1>自定义域名</h1>
+      <p class="lead">将代理绑定到自己的域名（如 <code>proxy.example.com</code>），更短、更好记、更专业。</p>
+
+      <h2 id="why">为什么要绑定域名</h2>
+      <table class="doc-table">
+        <thead><tr><th>对比项</th><th>Vercel 默认域名</th><th>自定义域名</th></tr></thead>
+        <tbody>
+          <tr><td>长度</td><td><code>github-proxy-3a6i7t53s.vercel.app</code></td><td><code>gh.example.com</code></td></tr>
+          <tr><td>记忆难度</td><td>高（随机字符串）</td><td>低（自定义）</td></tr>
+          <tr><td>分享友好</td><td>不友好</td><td>友好</td></tr>
+          <tr><td>HTTPS</td><td>自动</td><td>自动</td></tr>
+          <tr><td>费用</td><td>免费</td><td>域名费（约 ¥50-100/年）</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="buy-domain">购买域名</h2>
+      <p>推荐在以下平台购买域名：</p>
+      <table class="doc-table">
+        <thead><tr><th>平台</th><th>特点</th><th>价格参考</th></tr></thead>
+        <tbody>
+          <tr><td>Cloudflare Registrar</td><td>批发价，无加价</td><td>最低（.com ¥60/年）</td></tr>
+          <tr><td>Namecheap</td><td>老牌，常有优惠</td><td>中等</td></tr>
+          <tr><td>阿里云万网</td><td>国内解析快</td><td>中等</td></tr>
+          <tr><td>腾讯云 DNSPod</td><td>国内解析快</td><td>中等</td></tr>
+          <tr><td>Vercel</td><td>一键购买+配置</td><td>略高</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="vercel-dns">Vercel DNS 配置（推荐）</h2>
+      <p>最简单的方式——把域名直接交给 Vercel 管理：</p>
+      <ol>
+        <li>打开 Vercel Dashboard → 你的项目 → <strong>Settings → Domains</strong></li>
+        <li>输入你的域名（如 <code>gh.example.com</code>），点击 <strong>Add</strong></li>
+        <li>Vercel 会提示你设置 NS 记录，将域名的 Nameserver 改为 Vercel 的：
+          <ul>
+            <li><code>ns1.vercel-dns.com</code></li>
+            <li><code>ns2.vercel-dns.com</code></li>
+          </ul>
+        </li>
+        <li>在域名商后台修改 NS 记录（通常 5 分钟 - 48 小时生效）</li>
+        <li>回到 Vercel，等待状态变为 <span style="color:#28a745">Valid Configuration</span></li>
+      </ol>
+
+      <h2 id="cname">CNAME 配置</h2>
+      <p>如果你不想把 DNS 交给 Vercel，可以用 CNAME：</p>
+      <div class="code-block">
+        <code># DNS 记录配置
+类型: CNAME
+名称: gh (或 @ 代表根域名)
+值: cname.vercel-dns.com
+TTL: 600</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <p>然后在 Vercel Dashboard → Settings → Domains 中添加该域名。</p>
+
+      <h2 id="a-record">A 记录配置</h2>
+      <p>Vercel 也支持 A 记录（不推荐，因为 IP 可能变化）：</p>
+      <div class="code-block">
+        <code># DNS 记录配置
+类型: A
+名称: gh (或 @)
+值: 76.76.21.21
+TTL: 600</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <div class="warn-box">
+        <strong>⚠️ 注意：</strong>Vercel 的 IP 地址可能会变更。CNAME 方式更可靠，推荐使用 CNAME 或 NS 委托。
+      </div>
+
+      <h2 id="https">HTTPS 证书</h2>
+      <p>Vercel 会自动为你的自定义域名申请和续签 TLS 证书（Let's Encrypt），无需任何手动操作。</p>
+      <ul>
+        <li>证书有效期：90 天，自动续签</li>
+        <li>支持通配符域名（<code>*.example.com</code>）</li>
+        <li>自动启用 HTTP/2 和 HTTP/3 (QUIC)</li>
+      </ul>
+
+      <h2 id="verify">验证配置</h2>
+      <p>配置完成后，用以下命令验证：</p>
+      <div class="code-block">
+        <code># 检查 DNS 解析
+nslookup gh.example.com
+# 应该返回 Vercel 的 IP
+
+# 检查 HTTPS 证书
+curl -I https://gh.example.com/
+# 应该返回 HTTP/2 200
+
+# 检查代理功能
+curl -I https://gh.example.com/github.com/vercel/next.js
+# 应该返回 HTTP/2 200</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="providers">常见域名商指南</h2>
+
+      <h3>Cloudflare</h3>
+      <ol>
+        <li>登录 Cloudflare → 添加站点</li>
+        <li>将域名 NS 改为 Cloudflare 的 Nameserver</li>
+        <li>在 DNS 面板添加 CNAME 记录指向 <code>cname.vercel-dns.com</code></li>
+        <li><strong>重要：</strong>将代理状态设为 <strong>DNS Only</strong>（灰色云朵），否则 Cloudflare 会缓存导致问题</li>
+        <li>在 Vercel 添加域名</li>
+      </ol>
+
+      <h3>阿里云万网</h3>
+      <ol>
+        <li>登录阿里云控制台 → 域名管理</li>
+        <li>选择域名 → DNS 修改</li>
+        <li>添加 CNAME 记录：主机记录 <code>gh</code>，记录值 <code>cname.vercel-dns.com</code></li>
+        <li>或将 NS 改为 Vercel 的 Nameserver</li>
+      </ol>
+
+      <h3>腾讯云 DNSPod</h3>
+      <ol>
+        <li>登录腾讯云控制台 → DNSPod</li>
+        <li>选择域名 → 添加记录</li>
+        <li>CNAME 记录：主机 <code>gh</code>，值 <code>cname.vercel-dns.com</code></li>
+      </ol>
+
+      <h3>Namecheap</h3>
+      <ol>
+        <li>登录 Namecheap → Domain List</li>
+        <li>找到域名 → Advanced DNS</li>
+        <li>添加 CNAME 记录：Host <code>gh</code>，Value <code>cname.vercel-dns.com</code></li>
+      </ol>
+
+      <div class="tip-box">
+        <strong>💡 提示：</strong>绑定自定义域名后，记得更新文档和脚本中的域名引用。建议同时保留 Vercel 默认域名作为备份。
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>© 2026 tanle-mtr · Licensed under <a href="license.html">MIT License</a></p>
+      <p><a href="https://github.com/tanle-mtr" target="_blank" rel="noopener">GitHub</a> · <a href="faq.html">FAQ</a> · <a href="troubleshooting.html">排查指南</a></p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

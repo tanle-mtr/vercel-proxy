@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>下载指南 - GitHub 代理文档</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-brand">
+        <span class="brand-icon">⬇️</span>
+        <span class="brand-text">GitHub 代理</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="切换菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="deployment.html">部署</a></li>
+        <li><a href="usage.html">使用方式</a></li>
+        <li><a href="download.html" class="active">下载</a></li>
+        <li><a href="aria2c.html">aria2c</a></li>
+        <li><a href="configuration.html">配置</a></li>
+        <li><a href="add-new-site.html">扩展</a></li>
+        <li><a href="custom-domain.html">域名</a></li>
+        <li><a href="security.html">安全</a></li>
+        <li><a href="limits.html">限制</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="troubleshooting.html">排查</a></li>
+        <li><a href="changelog.html">更新</a></li>
+        <li><a href="license.html">许可证</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">下载指南</div>
+      <ul class="sidebar-nav">
+        <li><a href="#curl" class="sidebar-link">cURL 下载</a></li>
+        <li><a href="#wget" class="sidebar-link">Wget 下载</a></li>
+        <li><a href="#python" class="sidebar-link">Python 下载</a></li>
+        <li><a href="#powershell" class="sidebar-link">PowerShell 下载</a></li>
+        <li><a href="#browser" class="sidebar-link">浏览器下载</a></li>
+        <li><a href="#batch" class="sidebar-link">批量下载</a></li>
+        <li><a href="#speed" class="sidebar-link">速度对比</a></li>
+      </ul>
+    </aside>
+
+    <main class="docs-main">
+      <h1>下载指南</h1>
+      <p class="lead">本文档汇总了各种下载方式，覆盖命令行、脚本和浏览器场景。</p>
+
+      <h2 id="curl">cURL 下载</h2>
+      <p>cURL 是最常用的下载工具，几乎所有系统都预装了。</p>
+
+      <h3>下载 Archive（整个仓库）</h3>
+      <div class="code-block">
+        <code># 下载 main 分支
+curl -L "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip" -o repo.zip
+
+# 下载 master 分支
+curl -L "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/master.zip" -o repo.zip
+
+# 下载指定 tag
+curl -L "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/tags/v1.0.0.zip" -o repo-v1.zip
+
+# 下载 tar.gz 格式
+curl -L "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.tar.gz" -o repo.tar.gz</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>下载 Raw 文件</h3>
+      <div class="code-block">
+        <code># 下载单个文件
+curl "https://your-domain.vercel.app/raw.githubusercontent.com/owner/repo/main/README.md" -o README.md
+
+# 下载并跟随重定向
+curl -L "https://your-domain.vercel.app/raw.githubusercontent.com/owner/repo/main/large-file.bin" -o file.bin</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>下载 Release 附件</h3>
+      <div class="code-block">
+        <code>curl -L "https://your-domain.vercel.app/github.com/owner/repo/releases/download/v1.0.0/app-linux-amd64.zip" -o app.zip</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="wget">Wget 下载</h2>
+      <p>Linux 和 macOS 用户也可以使用 wget：</p>
+      <div class="code-block">
+        <code># 基本下载
+wget "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip" -O repo.zip
+
+# 断点续传
+wget -c "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip" -O repo.zip
+
+# 限速下载（500KB/s）
+wget --limit-rate=500k "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip" -O repo.zip</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="python">Python 下载</h2>
+      <p>使用 Python 的 requests 库下载：</p>
+      <div class="code-block">
+        <code>import requests
+
+url = "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"
+r = requests.get(url, stream=True)
+r.raise_for_status()
+
+with open("repo.zip", "wb") as f:
+    for chunk in r.iter_content(chunk_size=8192):
+        f.write(chunk)
+
+print("下载完成！")</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>使用 urllib（无需安装第三方库）</h3>
+      <div class="code-block">
+        <code>import urllib.request
+
+url = "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"
+urllib.request.urlretrieve(url, "repo.zip")
+print("下载完成！")</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="powershell">PowerShell 下载</h2>
+      <p>Windows 用户可以使用 PowerShell：</p>
+      <div class="code-block">
+        <code># PowerShell 5.1+
+Invoke-WebRequest -Uri "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip" -OutFile "repo.zip"
+
+# PowerShell 7+
+Invoke-RestMethod -Uri "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip" -OutFile "repo.zip"
+
+# 显示进度条
+$url = "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"
+$webClient = New-Object System.Net.WebClient
+$webClient.DownloadFile($url, "repo.zip")</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="browser">浏览器下载</h2>
+      <p>直接在浏览器地址栏输入代理 URL 即可下载：</p>
+      <ol>
+        <li>打开浏览器，在地址栏输入：<code>https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip</code></li>
+        <li>浏览器会自动下载 zip 文件</li>
+        <li>也可以通过仓库页面右下角的绿色"⬇️ 下载源码"按钮一键下载</li>
+      </ol>
+
+      <h2 id="batch">批量下载</h2>
+      <p>下载一个仓库的所有 Release 附件：</p>
+      <div class="code-block">
+        <code># 使用 API 获取 Release 列表，然后批量下载
+# 第一步：获取所有 Release 的下载链接
+curl "https://your-domain.vercel.app/api.github.com/repos/owner/repo/releases" | jq '.[].assets[].browser_download_url'
+
+# 第二步：逐个下载（Bash 脚本）
+for url in $(curl -s "https://your-domain.vercel.app/api.github.com/repos/owner/repo/releases" | jq -r '.[].assets[].browser_download_url'); do
+  filename=$(basename "$url")
+  echo "Downloading $filename ..."
+  curl -L "$url" -o "$filename"
+done</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="speed">速度对比</h2>
+      <p>以下是使用代理前后的下载速度参考（实际速度取决于你的网络环境）：</p>
+      <table class="doc-table">
+        <thead>
+          <tr><th>场景</th><th>直连 GitHub</th><th>通过 Vercel 代理</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Archive 下载（小仓库 < 10MB）</td><td>~200 KB/s</td><td>~2-5 MB/s</td></tr>
+          <tr><td>Archive 下载（大仓库 > 100MB）</td><td>经常超时</td><td>~5-10 MB/s</td></tr>
+          <tr><td>Release 附件（50MB）</td><td>~500 KB/s</td><td>~5-10 MB/s</td></tr>
+          <tr><td>Raw 单文件</td><td>~1 MB/s</td><td>~3-8 MB/s</td></tr>
+          <tr><td>aria2c 多线程（16 线程）</td><td>~2 MB/s</td><td>~15-30 MB/s</td></tr>
+        </tbody>
+      </table>
+      <div class="tip-box">
+        <strong>💡 提示：</strong>速度提升效果因地区和网络环境而异。Vercel 的边缘节点通常比直连 GitHub 有更好的路由优化。
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>© 2026 tanle-mtr · Licensed under <a href="license.html">MIT License</a></p>
+      <p><a href="https://github.com/tanle-mtr" target="_blank" rel="noopener">GitHub</a> · <a href="faq.html">FAQ</a> · <a href="troubleshooting.html">排查指南</a></p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

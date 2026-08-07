@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>配置说明 - GitHub 代理文档</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-brand">
+        <span class="brand-icon">⬇️</span>
+        <span class="brand-text">GitHub 代理</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="切换菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="deployment.html">部署</a></li>
+        <li><a href="usage.html">使用方式</a></li>
+        <li><a href="download.html">下载</a></li>
+        <li><a href="aria2c.html">aria2c</a></li>
+        <li><a href="configuration.html" class="active">配置</a></li>
+        <li><a href="add-new-site.html">扩展</a></li>
+        <li><a href="custom-domain.html">域名</a></li>
+        <li><a href="security.html">安全</a></li>
+        <li><a href="limits.html">限制</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="troubleshooting.html">排查</a></li>
+        <li><a href="changelog.html">更新</a></li>
+        <li><a href="license.html">许可证</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">配置说明</div>
+      <ul class="sidebar-nav">
+        <li><a href="#proxy-js" class="sidebar-link">proxy.js 详解</a></li>
+        <li><a href="#vercel-json" class="sidebar-link">vercel.json 详解</a></li>
+        <li><a href="#package-json" class="sidebar-link">package.json 详解</a></li>
+        <li><a href="#headers" class="sidebar-link">请求头配置</a></li>
+        <li><a href="#env-vars" class="sidebar-link">环境变量</a></li>
+        <li><a href="#advanced" class="sidebar-link">高级配置</a></li>
+      </ul>
+    </aside>
+
+    <main class="docs-main">
+      <h1>配置说明</h1>
+      <p class="lead">本文档详细解释项目中每个配置文件的每个字段，帮助你深入理解并自定义。</p>
+
+      <h2 id="proxy-js">api/proxy.js 详解</h2>
+      <p>这是整个项目的核心文件，负责接收请求、转发到 GitHub、处理响应。</p>
+
+      <h3>白名单配置</h3>
+      <div class="code-block">
+        <code>const ALLOWED_PREFIXES = [
+  'github.com',
+  'api.github.com',
+  'raw.githubusercontent.com',
+  'codeload.github.com',
+  'objects.githubusercontent.com',
+  'camo.githubusercontent.com',
+  'avatars.githubusercontent.com',
+  'gist.github.com',
+  'github.githubassets.com',
+  'user-images.githubusercontent.com',
+  'private-user-images.githubusercontent.com'
+];</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <p>只有匹配这些前缀的请求才会被代理，其他路径一律返回导航页。</p>
+      <div class="tip-box">
+        <strong>💡 提示：</strong>新增域名时，记得同时更新 <code>ALLOWED_PREFIXES</code>、<code>prefixes</code>（路由匹配）、<code>replaceText</code>（HTML 文本替换）和 <code>fixScript</code>（客户端 JavaScript 劫持）四处。
+      </div>
+
+      <h3>关键函数说明</h3>
+      <table class="doc-table">
+        <thead><tr><th>函数</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td><code>isAllowedHost(host)</code></td><td>判断目标域名是否在白名单内</td></tr>
+          <tr><td><code>replaceText(text)</code></td><td>将 HTML 中的绝对 URL（含协议相对 URL）替换为代理相对路径</td></tr>
+          <tr><td><code>extractRepoInfo(path)</code></td><td>从路径中提取 owner/repo</td></tr>
+          <tr><td><code>extractBranch(path)</code></td><td>从路径中提取当前分支名</td></tr>
+          <tr><td><code>injectDownloadBtn(html, host, path)</code></td><td>在页面右下角注入下载按钮</td></tr>
+          <tr><td><code>p(u)</code></td><td>fixScript 核心：重写绝对、协议相对、根相对 URL，以及 fetch/XHR</td></tr>
+        </tbody>
+      </table>
+
+      <h3>请求头处理</h3>
+      <div class="code-block">
+        <code>// 删除的头部（防止冲突）
+        'host'               → 由代理自动设置
+        'cf-connecting-ip'   → Cloudflare 私有头
+        'x-vercel-id'        → Vercel 内部头
+        'connection'          → 连接管理头
+        'content-length'      → 由运行时自动计算（解压后长度变化）
+
+        // 设置的头部
+        'Host'                → 目标域名（如 github.com）
+        'Origin'              → https://目标域名
+        'Referer'             → https://目标域名/
+        'User-Agent'          → 浏览器 UA（如未提供）</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>响应头处理</h3>
+      <div class="code-block">
+        <code>// 删除的头部（防止安全问题）
+'content-security-policy'       → 会阻止注入的脚本
+'content-security-policy-report-only' → 同上
+'clear-site-data'               → 清除浏览器数据
+'content-encoding'              → 避免解压问题
+'transfer-encoding'            → 由运行时处理
+
+// 添加的头部
+'Access-Control-Allow-Origin'  → *（允许跨域）</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="vercel-json">vercel.json 详解</h2>
+      <div class="code-block">
+        <code>{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/proxy" }
+  ]
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <p>这个配置将所有请求（无论路径是什么）都重写到 <code>/api/proxy</code>，由我们的代理函数统一处理。</p>
+
+      <table class="doc-table">
+        <thead><tr><th>字段</th><th>含义</th></tr></thead>
+        <tbody>
+          <tr><td><code>rewrites</code></td><td>定义 URL 重写规则</td></tr>
+          <tr><td><code>source</code></td><td>匹配模式，<code>/(.*)</code> 匹配所有路径</td></tr>
+          <tr><td><code>destination</code></td><td>目标路径，指向代理函数</td></tr>
+        </tbody>
+      </table>
+
+      <h3>可选：添加 Headers 规则</h3>
+      <div class="code-block">
+        <code>{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/proxy" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    }
+  ]
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="package-json">package.json 详解</h2>
+      <div class="code-block">
+        <code>{
+  "name": "github-proxy",
+  "version": "1.0.0",
+  "private": true
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <table class="doc-table">
+        <thead><tr><th>字段</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>name</code></td><td>项目名称，Vercel 用它来命名部署</td></tr>
+          <tr><td><code>version</code></td><td>语义化版本号</td></tr>
+          <tr><td><code>private</code></td><td>设为 true 防止意外发布到 npm</td></tr>
+        </tbody>
+      </table>
+
+      <div class="warn-box">
+        <strong>⚠️ 注意：</strong>不要添加 <code>"type": "module"</code>，因为我们使用 CommonJS 的 <code>module.exports</code> 语法。混用会导致 Vercel 运行时报错。
+      </div>
+
+      <h2 id="headers">请求头配置</h2>
+      <p>代理在转发请求时会设置以下关键头部：</p>
+
+      <table class="doc-table">
+        <thead><tr><th>头部</th><th>值</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td><code>Host</code></td><td>目标域名</td><td>告诉上游服务器请求的目标</td></tr>
+          <tr><td><code>Origin</code></td><td><code>https://目标域名</code></td><td>绕过 CORS 检查</td></tr>
+          <tr><td><code>Referer</code></td><td><code>https://目标域名/</code></td><td>模拟浏览器来源</td></tr>
+          <tr><td><code>User-Agent</code></td><td>Chrome UA</td><td>避免被识别为爬虫</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="env-vars">环境变量</h2>
+      <p>当前版本不需要环境变量。如果需要添加（如 API Token），在 Vercel Dashboard → Settings → Environment Variables 中配置。</p>
+
+      <h3>示例：添加 GitHub Token 支持</h3>
+      <div class="code-block">
+        <code>// 在 proxy.js 中读取
+const token = process.env.GITHUB_TOKEN;
+if (token) {
+  headers['Authorization'] = `Bearer ${token}`;
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <p>然后在 Vercel 中添加环境变量 <code>GITHUB_TOKEN</code>，值为你的 GitHub Personal Access Token。这样可以提高 API 速率限制（从 60次/小时 提升到 5000次/小时）。</p>
+
+      <h2 id="advanced">高级配置</h2>
+
+      <h3>1. 添加请求日志</h3>
+      <div class="code-block">
+        <code>// 在 handler 开头添加
+console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>2. 限制请求大小</h3>
+      <div class="code-block">
+        <code>// 在读取 body 前添加
+const contentLength = parseInt(req.headers['content-length'] || '0');
+if (contentLength > 4.5 * 1024 * 1024) {
+  return res.status(413).send('Payload too large (max 4.5MB)');
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>3. 添加速率限制</h3>
+      <div class="code-block">
+        <code>// 简单的 IP 速率限制（内存存储）
+const rateLimit = new Map();
+const MAX_REQUESTS = 100;
+const WINDOW_MS = 60 * 1000; // 1 分钟
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const windowStart = now - WINDOW_MS;
+  const requests = rateLimit.get(ip) || [];
+  const recent = requests.filter(t => t > windowStart);
+  if (recent.length >= MAX_REQUESTS) return false;
+  recent.push(now);
+  rateLimit.set(ip, recent);
+  return true;
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>4. 缓存控制</h3>
+      <div class="code-block">
+        <code>// 对静态资源添加缓存头
+if (contentType.includes('image/') || contentType.includes('font/')) {
+  respHeaders['Cache-Control'] = 'public, max-age=86400'; // 1 天
+} else if (contentType.includes('text/css') || contentType.includes('application/javascript')) {
+  respHeaders['Cache-Control'] = 'public, max-age=3600'; // 1 小时
+} else {
+  respHeaders['Cache-Control'] = 'no-cache';
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>© 2026 tanle-mtr · Licensed under <a href="license.html">MIT License</a></p>
+      <p><a href="https://github.com/tanle-mtr" target="_blank" rel="noopener">GitHub</a> · <a href="faq.html">FAQ</a> · <a href="troubleshooting.html">排查指南</a></p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

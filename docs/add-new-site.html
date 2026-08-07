@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>扩展白名单 - GitHub 代理文档</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-brand">
+        <span class="brand-icon">⬇️</span>
+        <span class="brand-text">GitHub 代理</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="切换菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="deployment.html">部署</a></li>
+        <li><a href="usage.html">使用方式</a></li>
+        <li><a href="download.html">下载</a></li>
+        <li><a href="aria2c.html">aria2c</a></li>
+        <li><a href="configuration.html">配置</a></li>
+        <li><a href="add-new-site.html" class="active">扩展</a></li>
+        <li><a href="custom-domain.html">域名</a></li>
+        <li><a href="security.html">安全</a></li>
+        <li><a href="limits.html">限制</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="troubleshooting.html">排查</a></li>
+        <li><a href="changelog.html">更新</a></li>
+        <li><a href="license.html">许可证</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">扩展白名单</div>
+      <ul class="sidebar-nav">
+        <li><a href="#add-domain" class="sidebar-link">添加新域名</a></li>
+        <li><a href="#github-subdomains" class="sidebar-link">GitHub 子域名</a></li>
+        <li><a href="#wildcard" class="sidebar-link">通配符匹配</a></li>
+        <li><a href="#test-new-domain" class="sidebar-link">测试新域名</a></li>
+        <li><a href="#remove-domain" class="sidebar-link">移除域名</a></li>
+      </ul>
+    </aside>
+
+    <main class="docs-main">
+      <h1>扩展白名单</h1>
+      <p class="lead">默认配置只代理 GitHub 相关域名。本文档教你如何安全地添加更多域名。</p>
+
+      <div class="warn-box">
+        <strong>⚠️ 安全警告：</strong>每添加一个域名，就等于给代理开放了一个新的出口。只添加你信任的、合法的域名。不要添加开放代理或可能被滥用的服务。
+      </div>
+
+      <h2 id="add-domain">添加新域名</h2>
+      <p>编辑 <code>api/proxy.js</code>，找到 <code>ALLOWED_PREFIXES</code> 数组：</p>
+      <div class="code-block">
+        <code>const ALLOWED_PREFIXES = [
+  'github.com',
+  'api.github.com',
+  'raw.githubusercontent.com',
+  'codeload.github.com',
+  // 👇 在这里添加新域名
+  'example.com'
+];</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>添加多个域名</h3>
+      <div class="code-block">
+        <code>const ALLOWED_PREFIXES = [
+  'github.com',
+  'api.github.com',
+  'raw.githubusercontent.com',
+  'codeload.github.com',
+  // 新增：npm 镜像
+  'registry.npmjs.org',
+  // 新增：Python PyPI
+  'pypi.org',
+  'files.pythonhosted.org',
+  // 新增：Docker Hub
+  'registry-1.docker.io',
+  // 新增：Hugging Face
+  'huggingface.co',
+  'cdn-lfs.huggingface.co'
+];</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="github-subdomains">GitHub 子域名</h2>
+      <p>以下是所有 GitHub 相关域名，按需添加：</p>
+      <table class="doc-table">
+        <thead><tr><th>域名</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>github.com</code></td><td>主站、仓库页面</td></tr>
+          <tr><td><code>api.github.com</code></td><td>REST API</td></tr>
+          <tr><td><code>raw.githubusercontent.com</code></td><td>Raw 文件</td></tr>
+          <tr><td><code>codeload.github.com</code></td><td>Archive 下载</td></tr>
+          <tr><td><code>objects.githubusercontent.com</code></td><td>LFS 大文件</td></tr>
+          <tr><td><code>camo.githubusercontent.com</code></td><td>图片缓存</td></tr>
+          <tr><td><code>avatars.githubusercontent.com</code></td><td>头像</td></tr>
+          <tr><td><code>gist.github.com</code></td><td>Gist 代码片段</td></tr>
+          <tr><td><code>gist.githubusercontent.com</code></td><td>Gist Raw 文件</td></tr>
+          <tr><td><code>guides.github.com</code></td><td>GitHub Guides</td></tr>
+          <tr><td><code>docs.github.com</code></td><td>GitHub Docs</td></tr>
+          <tr><td><code>education.github.com</code></td><td>GitHub Education</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="wildcard">通配符匹配</h2>
+      <p>当前实现使用精确匹配和子域名匹配：</p>
+      <div class="code-block">
+        <code>// isAllowedHost 函数
+function isAllowedHost(host) {
+  return ALLOWED_PREFIXES.some(d => host === d || host.endsWith('.' + d));
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <p>这意味着：</p>
+      <ul>
+        <li><code>github.com</code> → ✅ 匹配</li>
+        <li><code>api.github.com</code> → ✅ 匹配（子域名）</li>
+        <li><code>gist.github.com</code> → ✅ 匹配（如果在白名单中）</li>
+        <li><code>evil.github.com</code> → ✅ 也会匹配（注意安全风险）</li>
+      </ul>
+
+      <h3>更严格的匹配（可选）</h3>
+      <p>如果只想允许特定子域名：</p>
+      <div class="code-block">
+        <code>function isAllowedHost(host) {
+  // 只匹配精确值，不匹配子域名
+  return ALLOWED_PREFIXES.includes(host);
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="test-new-domain">测试新域名</h2>
+      <p>添加域名后，部署并测试：</p>
+      <div class="code-block">
+        <code># 测试新添加的域名是否生效
+curl -I "https://your-domain.vercel.app/registry.npmjs.org/express"
+
+# 测试重定向
+curl -I "https://your-domain.vercel.app/pypi.org/project/requests/"
+
+# 测试 404（不存在的路径）
+curl -I "https://your-domain.vercel.app/registry.npmjs.org/nonexistent-pkg"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>测试脚本</h3>
+      <div class="code-block">
+        <code>#!/bin/bash
+# test-domains.sh - 批量测试白名单域名
+
+DOMAIN="https://your-domain.vercel.app"
+
+declare -A TESTS=(
+  ["github.com"]="/vercel/next.js"
+  ["api.github.com"]="/repos/vercel/next.js"
+  ["raw.githubusercontent.com"]="/vercel/next.js/canary/package.json"
+  ["registry.npmjs.org"]="/express"
+)
+
+for host in "${!TESTS[@]}"; do
+  path="${TESTS[$host]}"
+  url="${DOMAIN}/${host}${path}"
+  code=$(curl -s -o /dev/null -w "%{http_code}" "$url")
+  echo "${host}: HTTP ${code}"
+done</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="remove-domain">移除域名</h2>
+      <p>只需从 <code>ALLOWED_PREFIXES</code> 数组中删除对应行，重新部署即可。</p>
+      <div class="tip-box">
+        <strong>💡 提示：</strong>移除域名后，之前生成的代理链接会返回导航页（200），不会报错。
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>© 2026 tanle-mtr · Licensed under <a href="license.html">MIT License</a></p>
+      <p><a href="https://github.com/tanle-mtr" target="_blank" rel="noopener">GitHub</a> · <a href="faq.html">FAQ</a> · <a href="troubleshooting.html">排查指南</a></p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

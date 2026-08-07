@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>部署指南 - GitHub 代理文档</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-brand">
+        <span class="brand-icon">⬇️</span>
+        <span class="brand-text">GitHub 代理</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="切换菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="usage.html">使用方式</a></li>
+        <li><a href="download.html">下载</a></li>
+        <li><a href="configuration.html">配置</a></li>
+        <li><a href="security.html">安全</a></li>
+        <li><a href="troubleshooting.html">排查</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+          <span class="theme-icon">🌙</span>
+        </button>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">部署指南</div>
+      <ul class="sidebar-nav">
+        <li><a href="#prerequisites" class="sidebar-link">前置要求</a></li>
+        <li><a href="#vercel" class="sidebar-link">Vercel 部署</a></li>
+        <li><a href="#custom-domain" class="sidebar-link">自定义域名</a></li>
+        <li><a href="#env-vars" class="sidebar-link">环境变量</a></li>
+        <li><a href="#github-pages" class="sidebar-link">GitHub Pages（文档站点）</a></li>
+      </ul>
+    </aside>
+
+    <main class="docs-main">
+      <h1>部署指南</h1>
+      <p class="lead">将 GitHub 代理部署到 Vercel，5 分钟即可完成。</p>
+
+      <h2 id="prerequisites">前置要求</h2>
+      <ul>
+        <li>一个 <a href="https://github.com" target="_blank">GitHub</a> 账号</li>
+        <li>一个 <a href="https://vercel.com" target="_blank">Vercel</a> 账号（推荐用 GitHub 登录）</li>
+        <li>本地安装 <a href="https://git-scm.com" target="_blank">Git</a>（可选，也可用网页操作）</li>
+      </ul>
+
+      <h2 id="vercel">Vercel 部署</h2>
+      <h3>方式一：网页导入（推荐）</h3>
+      <ol>
+        <li>打开 <a href="https://vercel.com/new" target="_blank">vercel.com/new</a></li>
+        <li>点击 <strong>Import Project</strong>，选择刚克隆的仓库</li>
+        <li>Framework Preset 选择 <strong>Other</strong>（不需要选）</li>
+        <li>Build Command 留空</li>
+        <li>Output Directory 留空</li>
+        <li>点击 <strong>Deploy</strong></li>
+      </ol>
+      <div class="admonition admonition-info">
+        <p class="admonition-title">💡 提示</p>
+        <p>第一次部署大约需要 30-60 秒。部署完成后，Vercel 会给你一个形如 <code>xxx.vercel.app</code> 的域名。</p>
+      </div>
+
+      <h3>方式二：Vercel CLI</h3>
+      <div class="code-block">
+        <code># 安装 Vercel CLI
+npm install -g vercel
+
+# 进入项目目录
+cd vercel-proxy
+
+# 部署到生产环境
+vercel --prod</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>方式三：GitHub Actions 自动部署</h3>
+      <p>在仓库根目录创建 <code>.github/workflows/deploy.yml</code>：</p>
+      <div class="code-block">
+        <code>name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.ORG_ID }}
+          vercel-project-id: ${{ secrets.PROJECT_ID }}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="custom-domain">自定义域名</h2>
+      <p>在 Vercel Dashboard → Settings → Domains 中添加自定义域名：</p>
+      <ol>
+        <li>登录 <a href="https://vercel.com" target="_blank">Vercel Dashboard</a></li>
+        <li>进入项目 → <strong>Settings</strong> → <strong>Domains</strong></li>
+        <li>输入你的域名（如 <code>proxy.example.com</code>）</li>
+        <li>按照提示配置 DNS（添加 CNAME 记录指向 <code>cname.vercel-dns.com</code>）</li>
+      </ol>
+
+      <h2 id="env-vars">环境变量</h2>
+      <p>当前版本不需要环境变量。如需添加访问控制：</p>
+      <div class="code-block">
+        <code># 在 Vercel Dashboard → Settings → Environment Variables 添加：
+
+# 方式一：IP 白名单（多个 IP 用逗号分隔）
+ALLOWED_IPS=1.2.3.4,5.6.7.8
+
+# 方式二：Token 认证
+PROXY_TOKEN=a3f8b2c9e1d4f7a6b5c8e9d2f1a4b7c
+
+# 方式三：GitHub Token（提高 API 速率限制）
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="github-pages">GitHub Pages（文档站点）</h2>
+      <p>如需部署文档站点，创建 <code>.github/workflows/pages.yml</code>：</p>
+      <div class="code-block">
+        <code>name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'gh-proxy-docs/**'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'gh-proxy-docs'
+      - id: deployment
+        uses: actions/deploy-pages@v4</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <div class="tip-box">
+        <strong>💡 提示：</strong>文档站点会自动部署到 <code>https://tanle-mtr.github.io/vercel-proxy/</code>（需开启 GitHub Pages）。
+      </div>
+
+      <h2>验证部署</h2>
+      <p>部署完成后，运行以下命令验证：</p>
+      <div class="code-block">
+        <code># 导航页（应返回 200）
+curl "https://你的域名.vercel.app/"
+
+# 仓库页面（应返回 200）
+curl -I "https://你的域名.vercel.app/github.com/vercel/next.js"
+
+# 下载源码
+curl -L "https://你的域名.vercel.app/github.com/vercel/next.js/archive/refs/heads/canary.zip" -o next.zip
+
+# API 代理
+curl "https://你的域名.vercel.app/api.github.com/repos/vercel/next.js"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <div class="admonition admonition-success">
+        <p class="admonition-title">🎉 完成！</p>
+        <p>你的 GitHub 代理已经部署成功，可以开始使用了！</p>
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>© 2026 tanle-mtr · Licensed under <a href="license.html">MIT License</a></p>
+      <p><a href="https://github.com/tanle-mtr" target="_blank" rel="noopener">GitHub</a> · <a href="faq.html">FAQ</a> · <a href="troubleshooting.html">排查指南</a></p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

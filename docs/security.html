@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>安全 - GitHub 代理文档</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-brand">
+        <span class="brand-icon">⬇️</span>
+        <span class="brand-text">GitHub 代理</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="切换菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="deployment.html">部署</a></li>
+        <li><a href="usage.html">使用方式</a></li>
+        <li><a href="download.html">下载</a></li>
+        <li><a href="aria2c.html">aria2c</a></li>
+        <li><a href="configuration.html">配置</a></li>
+        <li><a href="add-new-site.html">扩展</a></li>
+        <li><a href="custom-domain.html">域名</a></li>
+        <li><a href="security.html" class="active">安全</a></li>
+        <li><a href="limits.html">限制</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="troubleshooting.html">排查</a></li>
+        <li><a href="changelog.html">更新</a></li>
+        <li><a href="license.html">许可证</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">安全</div>
+      <ul class="sidebar-nav">
+        <li><a href="#risk" class="sidebar-link">潜在风险</a></li>
+        <li><a href="#ip-whitelist" class="sidebar-link">IP 白名单</a></li>
+        <li><a href="#token-auth" class="sidebar-link">Token 认证</a></li>
+        <li><a href="#rate-limit" class="sidebar-link">速率限制</a></li>
+        <li><a href="#content-filter" class="sidebar-link">内容过滤</a></li>
+        <li><a href="#logging" class="sidebar-link">日志审计</a></li>
+        <li><a href="#emergency" class="sidebar-link">应急响应</a></li>
+      </ul>
+    </aside>
+
+    <main class="docs-main">
+      <h1>安全</h1>
+      <p class="lead">代理是一把双刃剑。本文档帮你把风险降到最低。</p>
+
+      <div class="warn-box">
+        <strong>⚠️ 重要提醒：</strong>一个开放的代理可能被他人用于绕过网络限制、下载恶意软件或发起攻击。请务必配置访问控制！
+      </div>
+
+      <h2 id="risk">潜在风险</h2>
+      <table class="doc-table">
+        <thead><tr><th>风险</th><th>描述</th><th>严重程度</th></tr></thead>
+        <tbody>
+          <tr><td>被滥用为开放代理</td><td>任何人都能通过你的域名访问 GitHub</td><td>🔴 高</td></tr>
+          <tr><td>带宽耗尽</td><td>恶意用户大量下载，消耗 100GB 月额度</td><td>🟡 中</td></tr>
+          <tr><td>请求数耗尽</td><td>被刷请求，超过 100 万次/月</td><td>🟡 中</td></tr>
+          <tr><td>法律连带责任</td><td>他人通过代理下载侵权内容</td><td>🔴 高</td></tr>
+          <tr><td>Token 泄露</td><td>环境变量中的 GitHub Token 被误用</td><td>🟡 中</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="ip-whitelist">IP 白名单</h2>
+      <p>最简单有效的安全措施——只允许你的 IP 使用代理。</p>
+
+      <h3>方式一：Vercel Edge Middleware（推荐）</h3>
+      <p>创建 <code>middleware.js</code> 放在项目根目录：</p>
+      <div class="code-block">
+        <code>// middleware.js
+const ALLOWED_IPS = [
+  '1.2.3.4',      // 你的家庭 IP
+  '5.6.7.8',      // 你的办公 IP
+  '::1',            // IPv6 localhost
+];
+
+export function middleware(req) {
+  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+  const clientIp = ip.split(',')[0].trim();
+
+  if (!ALLOWED_IPS.includes(clientIp)) {
+    return new Response('Access Denied', { status: 403 });
+  }
+
+  return new Response(null, { status: 200 });
+}
+
+export const config = {
+  matcher: '/:path*'
+};</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>方式二：在 proxy.js 中检查</h3>
+      <div class="code-block">
+        <code>// 在 handler 开头添加
+const ALLOWED_IPS = ['1.2.3.4', '5.6.7.8'];
+const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+
+if (!ALLOWED_IPS.includes(clientIp)) {
+  return res.status(403).send('Access Denied');
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>获取你的公网 IP</h3>
+      <div class="code-block">
+        <code># 方法一
+curl ifconfig.me
+
+# 方法二
+curl ipinfo.io/ip
+
+# 方法三（国内推荐）
+curl myip.ipip.net</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="token-auth">Token 认证</h2>
+      <p>更灵活的方案——用 Token 控制访问。</p>
+
+      <h3>设置环境变量</h3>
+      <p>在 Vercel Dashboard → Settings → Environment Variables 添加：</p>
+      <table class="doc-table">
+        <thead><tr><th>变量名</th><th>值</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>PROXY_TOKEN</code></td><td>一个长随机字符串</td><td>如 <code>a3f8b2c9e1d4f7a6b5c8e9d2f1a4b7c</code></td></tr>
+          <tr><td><code>GITHUB_TOKEN</code></td><td>GitHub Personal Access Token</td><td>提高 API 速率限制</td></tr>
+        </tbody>
+      </table>
+
+      <h3>生成随机 Token</h3>
+      <div class="code-block">
+        <code># 生成 32 字符随机 Token
+openssl rand -hex 16
+
+# 或使用 Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>在 proxy.js 中验证 Token</h3>
+      <div class="code-block">
+        <code>// 在 handler 开头添加
+const PROXY_TOKEN = process.env.PROXY_TOKEN;
+
+if (PROXY_TOKEN) {
+  const authHeader = req.headers['authorization'] || '';
+  const urlToken = new URL(req.url, 'http://localhost').searchParams.get('token') || '';
+  
+  const valid = 
+    authHeader === `Bearer ${PROXY_TOKEN}` ||
+    authHeader === `Token ${PROXY_TOKEN}` ||
+    urlToken === PROXY_TOKEN;
+
+  if (!valid) {
+    res.setHeader('WWW-Authenticate', 'Bearer realm="GitHub Proxy"');
+    return res.status(401).send('Unauthorized');
+  }
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>使用 Token 访问</h3>
+      <div class="code-block">
+        <code># Header 方式
+curl -H "Authorization: Bearer a3f8b2c9e1d4f7a6b5c8e9d2f1a4b7c" \
+  "https://your-domain.vercel.app/github.com/owner/repo"
+
+# URL 参数方式
+curl "https://your-domain.vercel.app/github.com/owner/repo?token=a3f8b2c9e1d4f7a6b5c8e9d2f1a4b7c"
+
+# aria2c 方式
+aria2c --header="Authorization: Bearer a3f8b2c9e1d4f7a6b5c8e9d2f1a4b7c" \
+  "https://your-domain.vercel.app/github.com/owner/repo/archive/main.zip"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="rate-limit">速率限制</h2>
+      <p>防止单个 IP 消耗过多资源。</p>
+
+      <h3>简单内存限速</h3>
+      <div class="code-block">
+        <code>// 在 proxy.js 顶部添加
+const rateMap = new Map();
+const RATE_LIMIT = 100;     // 每窗口最大请求数
+const WINDOW_MS = 60000;    // 窗口时间（1 分钟）
+
+function checkRate(ip) {
+  const now = Date.now();
+  const windowStart = now - WINDOW_MS;
+  const requests = rateMap.get(ip) || [];
+  const recent = requests.filter(t => t > windowStart);
+  
+  if (recent.length >= RATE_LIMIT) {
+    return false;
+  }
+  
+  recent.push(now);
+  rateMap.set(ip, recent);
+  return true;
+}
+
+// 在 handler 中调用
+const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+if (!checkRate(clientIp)) {
+  return res.status(429).send('Too Many Requests');
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <div class="warn-box">
+        <strong>⚠️ 注意：</strong>Vercel 是 Serverless 环境，内存中的 rateMap 在实例重启后会丢失。生产环境建议使用 Redis（如 Vercel KV 或 Upstash）。
+      </div>
+
+      <h3>使用 Upstash Redis（推荐生产方案）</h3>
+      <div class="code-block">
+        <code>// 安装依赖
+npm install @upstash/redis
+
+// 在 proxy.js 中使用
+import { Redis } from '@upstash/redis';
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_URL,
+  token: process.env.UPSTASH_REDIS_TOKEN,
+});
+
+async function checkRateUpstash(ip) {
+  const key = `rate:${ip}`;
+  const count = await redis.incr(key);
+  if (count === 1) await redis.expire(key, 60);
+  return count <= 100;
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="content-filter">内容过滤</h2>
+      <p>防止代理被用于下载恶意内容。</p>
+
+      <h3>文件类型白名单</h3>
+      <div class="code-block">
+        <code>const ALLOWED_EXTENSIONS = [
+  '.zip', '.tar', '.gz', '.tar.gz', '.tar.bz2', '.tar.xz',
+  '.js', '.ts', '.json', '.md', '.txt', '.csv',
+  '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico',
+  '.pdf', '.doc', '.docx', '.xls', '.xlsx',
+  '.py', '.rb', '.go', '.rs', '.java', '.c', '.cpp', '.h',
+  '.css', '.html', '.xml', '.yaml', '.yml', '.toml'
+];
+
+function isAllowedFile(url) {
+  const path = new URL(url).pathname.toLowerCase();
+  return ALLOWED_EXTENSIONS.some(ext => path.endsWith(ext));
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>文件大小限制</h3>
+      <div class="code-block">
+        <code>const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+
+// 在收到响应头后检查
+const contentLength = parseInt(upstreamRes.headers.get('content-length') || '0');
+if (contentLength > MAX_FILE_SIZE) {
+  return res.status(413).send(`File too large: ${contentLength} bytes > ${MAX_FILE_SIZE}`);
+}</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="logging">日志审计</h2>
+      <p>记录所有请求，便于事后审计。</p>
+
+      <h3>基础日志</h3>
+      <div class="code-block">
+        <code>// 在 handler 中添加
+const logEntry = {
+  timestamp: new Date().toISOString(),
+  ip: clientIp,
+  method: req.method,
+  url: req.url,
+  userAgent: req.headers['user-agent'] || '',
+};
+
+console.log(JSON.stringify(logEntry));</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>查看日志</h3>
+      <div class="code-block">
+        <code># Vercel CLI 查看实时日志
+vercel logs --follow
+
+# 查看最近 100 行
+vercel logs --limit 100
+
+# 过滤错误
+vercel logs | grep "Error"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="emergency">应急响应</h2>
+      <h3>发现被滥用怎么办？</h3>
+      <ol>
+        <li><strong>立即暂停项目：</strong>Vercel Dashboard → Settings → Danger Zone → Suspend Project</li>
+        <li><strong>检查日志：</strong>找出异常 IP 和请求模式</li>
+        <li><strong>添加 IP 白名单：</strong>只保留自己的 IP</li>
+        <li><strong>更换 Token：</strong>如果使用了 Token 认证，立即轮换</li>
+        <li><strong>重新部署：</strong>确认安全后恢复服务</li>
+      </ol>
+
+      <h3>一键紧急关闭脚本</h3>
+      <div class="code-block">
+        <code>#!/bin/bash
+# emergency-stop.sh - 紧急关闭代理
+# 通过 Vercel API 删除所有域名绑定
+
+VERCEL_TOKEN="your-vercel-token"
+PROJECT_ID="prj_xxxx"
+
+echo "🚨 正在紧急关闭代理..."
+
+# 获取所有域名
+DOMAINS=$(curl -s "https://api.vercel.com/v6/projects/${PROJECT_ID}/domains" \
+  -H "Authorization: Bearer ${VERCEL_TOKEN}" | jq -r '.[].name')
+
+# 逐个删除域名绑定
+for domain in $DOMAINS; do
+  echo "  删除域名: $domain"
+  curl -s -X DELETE "https://api.vercel.com/v6/projects/${PROJECT_ID}/domains/${domain}" \
+    -H "Authorization: Bearer ${VERCEL_TOKEN}"
+done
+
+echo "✅ 代理已关闭。请检查日志后手动恢复。"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <div class="tip-box">
+        <strong>💡 最佳实践：</strong>默认开启 IP 白名单或 Token 认证，不要部署完全开放的代理。定期检查 Vercel Dashboard 的用量统计，发现异常及时处理。
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>© 2026 tanle-mtr · Licensed under <a href="license.html">MIT License</a></p>
+      <p><a href="https://github.com/tanle-mtr" target="_blank" rel="noopener">GitHub</a> · <a href="faq.html">FAQ</a> · <a href="troubleshooting.html">排查指南</a></p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

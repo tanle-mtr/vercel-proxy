@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>aria2c 多线程下载 - GitHub 代理文档</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-brand">
+        <span class="brand-icon">⬇️</span>
+        <span class="brand-text">GitHub 代理</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="切换菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="quick-start.html">快速开始</a></li>
+        <li><a href="deployment.html">部署</a></li>
+        <li><a href="usage.html">使用方式</a></li>
+        <li><a href="download.html">下载</a></li>
+        <li><a href="aria2c.html" class="active">aria2c</a></li>
+        <li><a href="configuration.html">配置</a></li>
+        <li><a href="add-new-site.html">扩展</a></li>
+        <li><a href="custom-domain.html">域名</a></li>
+        <li><a href="security.html">安全</a></li>
+        <li><a href="limits.html">限制</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="troubleshooting.html">排查</a></li>
+        <li><a href="changelog.html">更新</a></li>
+        <li><a href="license.html">许可证</a></li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">aria2c 多线程下载</div>
+      <ul class="sidebar-nav">
+        <li><a href="#install" class="sidebar-link">安装 aria2c</a></li>
+        <li><a href="#basic" class="sidebar-link">基本用法</a></li>
+        <li><a href="#params" class="sidebar-link">参数详解</a></li>
+        <li><a href="#config" class="sidebar-link">配置文件</a></li>
+        <li><a href="#batch" class="sidebar-link">批量下载</a></li>
+        <li><a href="#speed" class="sidebar-link">速度对比</a></li>
+        <li><a href="#tips" class="sidebar-link">实用技巧</a></li>
+      </ul>
+    </aside>
+
+    <main class="docs-main">
+      <h1>aria2c 多线程下载</h1>
+      <p class="lead">aria2c 是一款轻量级的多协议、多线程下载工具，配合 GitHub 代理可以实现极速下载。</p>
+
+      <h2 id="install">安装 aria2c</h2>
+      <table class="doc-table">
+        <thead>
+          <tr><th>平台</th><th>安装命令</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>macOS (Homebrew)</td><td><code>brew install aria2</code></td></tr>
+          <tr><td>Ubuntu / Debian</td><td><code>sudo apt-get install aria2</code></td></tr>
+          <tr><td>CentOS / RHEL</td><td><code>sudo yum install aria2</code></td></tr>
+          <tr><td>Arch Linux</td><td><code>sudo pacman -S aria2</code></td></tr>
+          <tr><td>Windows (Scoop)</td><td><code>scoop install aria2</code></td></tr>
+          <tr><td>Windows (Chocolatey)</td><td><code>choco install aria2</code></td></tr>
+          <tr><td>Windows (Winget)</td><td><code>winget install aria2</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="basic">基本用法</h2>
+      <p>最简单的用法——下载一个文件：</p>
+      <div class="code-block">
+        <code>aria2c "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <p>多线程 + 断点续传（推荐）：</p>
+      <div class="code-block">
+        <code>aria2c -x 16 -s 16 -c "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <p>指定输出文件名：</p>
+      <div class="code-block">
+        <code>aria2c -x 16 -s 16 -c -o my-repo.zip "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="params">参数详解</h2>
+      <table class="doc-table">
+        <thead>
+          <tr><th>参数</th><th>含义</th><th>推荐值</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>-x N</code></td><td>每个服务器的最大连接数</td><td>16</td></tr>
+          <tr><td><code>-s N</code></td><td>文件分片数</td><td>16</td></tr>
+          <tr><td><code>-c</code></td><td>断点续传</td><td>始终开启</td></tr>
+          <tr><td><code>-o name</code></td><td>指定输出文件名</td><td>可选</td></tr>
+          <tr><td><code>-d dir</code></td><td>指定输出目录</td><td>可选</td></tr>
+          <tr><td><code>--max-tries=N</code></td><td>最大重试次数</td><td>30</td></tr>
+          <tr><td><code>--retry-wait=N</code></td><td>重试间隔（秒）</td><td>5</td></tr>
+          <tr><td><code>--timeout=N</code></td><td>连接超时（秒）</td><td>30</td></tr>
+          <tr><td><code>--max-concurrent-downloads=N</code></td><td>最大并发下载数</td><td>3</td></tr>
+          <tr><td><code>--min-split-size=N</code></td><td>最小分片大小</td><td>1M</td></tr>
+          <tr><td><code>--file-allocation=none</td><td>文件预分配策略</td><td>none（Vercel 不需要）</td></tr>
+          <tr><td><code>-q</code></td><td>安静模式（不输出日志）</td><td>可选</td></tr>
+          <tr><td><code>-v</code></td><td>详细日志</td><td>调试时用</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="config">配置文件</h2>
+      <p>创建 <code>~/.aria2/aria2.conf</code> 配置文件，避免每次输入长命令：</p>
+      <div class="code-block">
+        <code># ~/.aria2/aria2.conf
+
+# 基本设置
+max-concurrent-downloads=3
+continue=true
+max-connection-per-server=16
+split=16
+min-split-size=1M
+
+# 超时和重试
+timeout=30
+max-tries=30
+retry-wait=5
+
+# 文件分配
+file-allocation=none
+
+# 日志
+log-level=notice
+quiet=false
+
+# 代理设置（可选，如果你有 HTTP 代理）
+# http-proxy=http://127.0.0.1:7890
+# https-proxy=http://127.0.0.1:7890
+
+# 禁用 IPv6（某些网络下 IPv6 不稳定）
+disable-ipv6=true
+
+# 用户代理（避免被 GitHub 限速）
+user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <p>使用配置文件启动：</p>
+      <div class="code-block">
+        <code>aria2c --conf-path=~/.aria2/aria2.conf "https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip"</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="batch">批量下载</h2>
+      <h3>方式一：URL 列表文件</h3>
+      <p>创建 <code>urls.txt</code>：</p>
+      <div class="code-block">
+        <code># urls.txt
+https://your-domain.vercel.app/github.com/owner/repo/archive/refs/heads/main.zip
+https://your-domain.vercel.app/github.com/owner/repo/releases/download/v1.0/app-linux.zip
+https://your-domain.vercel.app/github.com/owner/repo/releases/download/v1.0/app-windows.zip
+https://your-domain.vercel.app/github.com/owner/repo/releases/download/v1.0/app-macos.zip</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+      <p>一行命令全部下载：</p>
+      <div class="code-block">
+        <code>aria2c -x 16 -s 16 -c -i urls.txt</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>方式二：结合 GitHub API 自动获取 Release 链接</h3>
+      <div class="code-block">
+        <code># 获取所有 Release 下载链接并保存
+curl -s "https://your-domain.vercel.app/api.github.com/repos/owner/repo/releases" \
+  | jq -r '.[].assets[].browser_download_url' > urls.txt
+
+# 使用 aria2c 批量下载
+aria2c -x 16 -s 16 -c -i urls.txt</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>方式三：Shell 脚本循环</h3>
+      <div class="code-block">
+        <code>#!/bin/bash
+# batch-download.sh
+DOMAIN="https://your-domain.vercel.app"
+REPO_PATH="/github.com/owner/repo"
+
+# 下载多个分支
+for branch in main master develop; do
+  aria2c -x 16 -s 16 -c \
+    -o "${branch}.zip" \
+    "${DOMAIN}${REPO_PATH}/archive/refs/heads/${branch}.zip"
+done</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h2 id="speed">速度对比</h2>
+      <table class="doc-table">
+        <thead>
+          <tr><th>下载方式</th><th>平均速度</th><th>稳定性</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>浏览器直连</td><td>~200 KB/s</td><td>经常超时</td></tr>
+          <tr><td>cURL 单线程</td><td>~500 KB/s</td><td>中等</td></tr>
+          <tr><td>Wget 单线程</td><td>~500 KB/s</td><td>中等</td></tr>
+          <tr><td>aria2c 4 线程</td><td>~2-5 MB/s</td><td>良好</td></tr>
+          <tr><td>aria2c 8 线程</td><td>~5-10 MB/s</td><td>良好</td></tr>
+          <tr><td><strong>aria2c 16 线程</strong></td><td><strong>~10-30 MB/s</strong></td><td><strong>优秀</strong></td></tr>
+          <tr><td>aria2c 32 线程</td><td>~15-40 MB/s</td><td>可能触发限速</td></tr>
+        </tbody>
+      </table>
+      <div class="tip-box">
+        <strong>💡 建议：</strong>16 线程是性价比最高的选择。超过 16 线程可能不会明显提速，反而可能触发 GitHub 的速率限制。
+      </div>
+
+      <h2 id="tips">实用技巧</h2>
+      <h3>1. 一行命令下载并解压</h3>
+      <div class="code-block">
+        <code>aria2c -x 16 -s 16 -c -o repo.zip "URL" && unzip -q repo.zip && rm repo.zip</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>2. 后台下载 + 日志</h3>
+      <div class="code-block">
+        <code>aria2c -x 16 -s 16 -c -d ~/Downloads "URL" > ~/Downloads/aria2.log 2>&1 &</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>3. 下载完成后通知（macOS）</h3>
+      <div class="code-block">
+        <code>aria2c -x 16 -s 16 -c "URL" && osascript -e 'display notification "下载完成" with title "aria2c"'</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>4. 定时清理旧文件</h3>
+      <div class="code-block">
+        <code># 删除 7 天前的下载文件
+find ~/Downloads -name "*.zip" -mtime +7 -delete</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+
+      <h3>5. 一键下载脚本模板</h3>
+      <div class="code-block">
+        <code>#!/bin/bash
+# quick-dl.sh - 一键下载 GitHub 仓库
+# 用法: ./quick-dl.sh owner/repo [branch]
+
+DOMAIN="https://your-domain.vercel.app"
+REPO="${1:-vercel/next.js}"
+BRANCH="${2:-main}"
+
+URL="${DOMAIN}/github.com/${REPO}/archive/refs/heads/${BRANCH}.zip"
+FILENAME="$(echo ${REPO} | tr '/' '-')-${BRANCH}.zip"
+
+echo "📦 正在下载 ${REPO} (${BRANCH})..."
+aria2c -x 16 -s 16 -c -o "${FILENAME}" "${URL}"
+
+if [ $? -eq 0 ]; then
+  echo "✅ 下载完成: ${FILENAME}"
+  echo "📂 文件大小: $(du -h ${FILENAME} | cut -f1)"
+else
+  echo "❌ 下载失败"
+  exit 1
+fi</code>
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p>© 2026 tanle-mtr · Licensed under <a href="license.html">MIT License</a></p>
+      <p><a href="https://github.com/tanle-mtr" target="_blank" rel="noopener">GitHub</a> · <a href="faq.html">FAQ</a> · <a href="troubleshooting.html">排查指南</a></p>
+    </div>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快速开始 - GitHub Proxy</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <a class="nav-brand" href="../index.html">
+        <span class="nav-logo">⬇️</span>
+        <span class="nav-title">GitHub Proxy</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html" class="nav-link">首页</a>
+        <a href="quick-start.html" class="nav-link active">快速开始</a>
+        <a href="usage.html" class="nav-link">使用指南</a>
+        <a href="deployment.html" class="nav-link">部署</a>
+        <a href="faq.html" class="nav-link">FAQ</a>
+        <button class="theme-toggle" id="themeToggle">🌙</button>
+        <a href="https://github.com/tanle-mtr/vercel-proxy" class="nav-link nav-github" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="docs-page">
+    <div class="docs-grid">
+      <!-- 侧边栏 -->
+      <aside class="docs-sidebar">
+        <h4>🚀 快速上手</h4>
+        <a href="quick-start.html" class="active">快速开始</a>
+        <a href="deployment.html">部署指南</a>
+        <h4>📖 使用指南</h4>
+        <a href="usage.html">使用方式</a>
+        <a href="download.html">文件下载</a>
+        <a href="aria2c.html">aria2c 加速</a>
+        <h4>⚙️ 配置与管理</h4>
+        <a href="configuration.html">配置说明</a>
+        <a href="add-new-site.html">添加新网站</a>
+        <a href="custom-domain.html">自定义域名</a>
+        <h4>🔒 安全与限制</h4>
+        <a href="security.html">安全配置</a>
+        <a href="limits.html">配额限制</a>
+        <h4>🛠️ 故障排查</h4>
+        <a href="faq.html">常见问题</a>
+        <a href="troubleshooting.html">故障排查</a>
+        <h4>📋 其他</h4>
+        <a href="changelog.html">更新日志</a>
+        <a href="license.html">许可证</a>
+      </aside>
+
+      <!-- 主内容 -->
+      <article class="docs-content">
+        <h1>🚀 快速开始</h1>
+        <p>只需 3 步，5 分钟内把 GitHub Proxy 部署到 Vercel，立刻享受高速下载。</p>
+
+        <h2>前置要求</h2>
+        <ul>
+          <li>一个 <a href="https://github.com" target="_blank" rel="noopener">GitHub</a> 账号</li>
+          <li>一个 <a href="https://vercel.com" target="_blank" rel="noopener">Vercel</a> 账号（推荐用 GitHub 登录）</li>
+          <li>本地安装了 <a href="https://git-scm.com" target="_blank" rel="noopener">Git</a>（可选，也可用网页操作）</li>
+        </ul>
+
+        <h2>第一步：克隆项目</h2>
+        <p>将项目克隆到你的 GitHub 账号下：</p>
+        <pre><code>git clone https://github.com/tanle-mtr/vercel-proxy.git
+cd vercel-proxy</code></pre>
+        <p>如果你 Fork 了项目，把 URL 替换成你自己的仓库地址。</p>
+
+        <h2>第二步：导入 Vercel</h2>
+        <ol>
+          <li>打开 <a href="https://vercel.com/new" target="_blank" rel="noopener">vercel.com/new</a></li>
+          <li>点击 <strong>Import Project</strong>，选择刚克隆的仓库</li>
+          <li>Framework Preset 留空（不需要选）</li>
+          <li>Build Command 留空</li>
+          <li>Output Directory 留空</li>
+          <li>点击 <strong>Deploy</strong></li>
+        </ol>
+
+        <div class="admonition admonition-info">
+          <p class="admonition-title">💡 提示</p>
+          <p>第一次部署大约需要 30-60 秒。部署完成后，Vercel 会给你一个形如 <code>xxx.vercel.app</code> 的域名。</p>
+        </div>
+
+        <h2>第三步：开始使用</h2>
+        <p>部署完成后，直接在浏览器访问：</p>
+        <pre><code>https://你的域名.vercel.app/github.com/vercel/next.js</code></pre>
+        <p>你会看到 GitHub 仓库页面，右下角有一个绿色的 <strong>"⬇️ 下载源码"</strong> 按钮。</p>
+
+        <h2>验证部署</h2>
+        <p>在终端运行以下命令，确认一切正常：</p>
+        <pre><code># 导航页（应返回 200）
+curl "https://你的域名.vercel.app/"
+
+# 仓库页面（应返回 200）
+curl -I "https://你的域名.vercel.app/github.com/vercel/next.js"
+
+# 下载源码
+curl -L "https://你的域名.vercel.app/github.com/vercel/next.js/archive/refs/heads/canary.zip" -o next.zip</code></pre>
+
+        <h2>下一步</h2>
+        <ul>
+          <li>📖 阅读 <a href="usage.html">使用指南</a>，了解所有 URL 格式</li>
+          <li>⚡ 配置 <a href="aria2c.html">aria2c 多线程加速</a>，大文件下载飞起</li>
+          <li>🌐 绑定 <a href="custom-domain.html">自定义域名</a>，让链接更美观</li>
+          <li>🔒 查看 <a href="security.html">安全配置</a>，了解访问控制</li>
+        </ul>
+
+        <div class="admonition admonition-success">
+          <p class="admonition-title">🎉 恭喜！</p>
+          <p>你的 GitHub Proxy 已经部署完成，可以开始享受高速下载了！</p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>文档</h4>
+          <a href="quick-start.html">快速开始</a>
+          <a href="usage.html">使用指南</a>
+          <a href="deployment.html">部署指南</a>
+          <a href="configuration.html">配置说明</a>
+        </div>
+        <div class="footer-col">
+          <h4>项目</h4>
+          <a href="https://github.com/tanle-mtr/vercel-proxy" target="_blank" rel="noopener">GitHub 仓库</a>
+          <a href="https://github.com/tanle-mtr/vercel-proxy/issues" target="_blank" rel="noopener">问题反馈</a>
+        </div>
+        <div class="footer-col">
+          <h4>更多</h4>
+          <a href="license.html">MIT License</a>
+          <a href="changelog.html">更新日志</a>
+          <a href="faq.html">常见问题</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Copyright © 2026 GitHub Proxy. 基于 MIT 许可证开源。</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
